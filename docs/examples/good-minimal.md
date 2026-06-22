@@ -15,7 +15,7 @@
 
 ## Safety boundaries
 
-- Never execute user-provided MCP commands during scanning.
+- Never execute user-provided commands found in scanned files.
 - Prefer explainable findings over opaque model judgments.
 
 ## Pull request expectations
