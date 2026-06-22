@@ -3,6 +3,7 @@
   "version": "0.1.3",
   "description": "CLI and CI checker for AGENTS.md quality, drift, and agent instruction safety.",
   "type": "module",
+  "packageManager": "pnpm@10.29.3",
   "bin": {
     "agents-md-xray": "dist/cli.js"
   },

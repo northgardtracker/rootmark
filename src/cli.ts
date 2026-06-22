@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { accessSync, constants, statSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { scan } from './scanner.js';
 import { renderJson, renderText, shouldFail } from './reporters.js';
@@ -22,7 +23,14 @@ function main(argv: string[]): number {
   }
 
   const rootArg = argv.find((a) => !a.startsWith('-') && a !== 'scan' && a !== argv[0] && a !== argv[1]);
-  const root = resolve(rootArg ?? process.cwd());
+  const rootInput = rootArg ?? '.';
+  const root = resolve(rootInput);
+
+  const rootError = getRootPathError(root, rootInput);
+  if (rootError) {
+    console.error(`Error: ${rootError}`);
+    return 2;
+  }
 
   // --format pretty|json (default: pretty)
   const formatFlag = getFlagValue(argv, '--format');
@@ -45,14 +53,44 @@ function main(argv: string[]): number {
   const failOnRaw = getFlagValue(argv, '--fail-on') ?? 'error';
   const failOn = resolveFailOn(failOnRaw);
 
-  const result = scan({ root, format, failOn: failOn === 'off' ? 'fail' : failOn });
-  console.log(format === 'json' ? renderJson(result) : renderText(result));
-  return shouldFail(result, failOn) ? 1 : 0;
+  try {
+    const result = scan({ root, format, failOn: failOn === 'off' ? 'fail' : failOn });
+    console.log(format === 'json' ? renderJson(result) : renderText(result));
+    return shouldFail(result, failOn) ? 1 : 0;
+  } catch (error) {
+    if (isPathAccessError(error)) {
+      console.error(`Error: cannot read root path: ${rootInput}`);
+      return 2;
+    }
+    throw error;
+  }
 }
 
 function getFlagValue(argv: string[], name: string): string | undefined {
   const index = argv.indexOf(name);
   return index >= 0 ? argv[index + 1] : undefined;
+}
+
+function getRootPathError(root: string, displayPath: string): string | undefined {
+  try {
+    const stats = statSync(root);
+    if (!stats.isDirectory()) {
+      return `cannot read root path: ${displayPath}`;
+    }
+    accessSync(root, constants.R_OK | constants.X_OK);
+    return undefined;
+  } catch {
+    return `cannot read root path: ${displayPath}`;
+  }
+}
+
+function isPathAccessError(error: unknown): boolean {
+  if (typeof error !== 'object' || error === null) {
+    return false;
+  }
+
+  const code = (error as { code?: unknown }).code;
+  return code === 'ENOENT' || code === 'EACCES' || code === 'EPERM' || code === 'ENOTDIR';
 }
 
 function printHelp(): void {

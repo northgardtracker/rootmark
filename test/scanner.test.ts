@@ -165,16 +165,16 @@ describe('resolveFailOn', () => {
 describe('CLI integration', () => {
   const cliPath = resolve('dist/cli.js');
 
-  function runCli(args: string[]): { stdout: string; exitCode: number } {
+  function runCli(args: string[]): { stdout: string; stderr: string; exitCode: number } {
     try {
       const stdout = execFileSync('node', [cliPath, ...args], {
         encoding: 'utf8',
         cwd: resolve('.'),
       });
-      return { stdout, exitCode: 0 };
+      return { stdout, stderr: '', exitCode: 0 };
     } catch (err: unknown) {
-      const e = err as { stdout?: string; status?: number };
-      return { stdout: e.stdout ?? '', exitCode: e.status ?? 1 };
+      const e = err as { stdout?: string; stderr?: string; status?: number };
+      return { stdout: e.stdout ?? '', stderr: e.stderr ?? '', exitCode: e.status ?? 1 };
     }
   }
 
@@ -221,5 +221,13 @@ describe('CLI integration', () => {
     expect(stdout).toContain('--fail-on');
     expect(stdout).toContain('--json');
     expect(exitCode).toBe(0);
+  });
+
+  it('returns exit code 2 for an unreadable root path without a stack trace', () => {
+    const { stdout, stderr, exitCode } = runCli(['scan', './definitely-not-existing-path']);
+    expect(stdout).toBe('');
+    expect(stderr).toContain('Error: cannot read root path: ./definitely-not-existing-path');
+    expect(stderr).not.toContain('at ');
+    expect(exitCode).toBe(2);
   });
 });
