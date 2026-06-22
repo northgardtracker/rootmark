@@ -4,6 +4,7 @@ import { requiredSections } from './rules/required-sections.js';
 import { dangerousInstructions } from './rules/dangerous-instructions.js';
 import { contextBloat } from './rules/context-bloat.js';
 import { staleCommands } from './rules/stale-commands.js';
+import { vagueInstructions } from './rules/vague-instructions.js';
 
 export function scan(options: ScanOptions): ScanResult {
   const files = findInstructionFiles(options.root);
@@ -27,6 +28,7 @@ export function scan(options: ScanOptions): ScanResult {
     findings.push(...dangerousInstructions(file, text));
     findings.push(...contextBloat(file, text));
     findings.push(...staleCommands(file, text, packageScripts));
+    findings.push(...vagueInstructions(file, text));
   }
 
   const score = scoreFindings(findings);
