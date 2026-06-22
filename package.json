@@ -19,7 +19,7 @@
     "test": "vitest run",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "eslint .",
-    "ci": "pnpm typecheck && pnpm test && pnpm build"
+    "ci": "pnpm typecheck && pnpm build && pnpm test"
   },
   "keywords": [
     "agents-md",
