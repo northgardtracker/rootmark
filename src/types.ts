@@ -15,7 +15,7 @@ export interface Finding {
 
 export interface ScanOptions {
   root: string;
-  format: 'pretty' | 'json';
+  format: 'pretty' | 'json' | 'sarif';
   failOn: Severity;
 }
 
@@ -43,3 +43,6 @@ export function resolveFailOn(value: string): Severity | 'off' {
   // Default
   return 'fail';
 }
+
+// Re-export for reporter helpers
+export { }

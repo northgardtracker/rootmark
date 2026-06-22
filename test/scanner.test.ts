@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { scan, resolveFailOn } from '../src/index.js';
-import { renderText, renderJson, shouldFail } from '../src/reporters.js';
+import { renderText, renderJson, renderSarif, shouldFail } from '../src/reporters.js';
 import { execFileSync } from 'node:child_process';
 import { resolve } from 'node:path';
 
@@ -136,6 +136,44 @@ describe('reporters', () => {
     const result = scan({ root: 'test/fixtures/bad', format: 'json', failOn: 'fail' });
     expect(shouldFail(result, 'off')).toBe(false);
   });
+  it('renderSarif returns valid SARIF with correct version and schema', () => {
+    const result = scan({ root: 'test/fixtures/bad', format: 'json', failOn: 'fail' });
+    const parsed = JSON.parse(renderSarif(result));
+    expect(parsed.version).toBe('2.1.0');
+    expect(parsed.$schema).toBe('https://json.schemastore.org/sarif-2.1.0.json');
+    expect(Array.isArray(parsed.runs)).toBe(true);
+    expect(parsed.runs.length).toBeGreaterThan(0);
+  });
+
+  it('renderSarif includes tool driver metadata', () => {
+    const result = scan({ root: 'test/fixtures/bad', format: 'json', failOn: 'fail' });
+    const parsed = JSON.parse(renderSarif(result));
+    const driver = parsed.runs[0].tool.driver;
+    expect(driver.name).toBe('agents-md-xray');
+    expect(driver.informationUri).toBe('https://github.com/northgardtracker/agents-md-xray');
+    expect(Array.isArray(driver.rules)).toBe(true);
+    expect(driver.rules.length).toBeGreaterThan(0);
+  });
+
+  it('renderSarif maps severities correctly', () => {
+    const result = scan({ root: 'test/fixtures/bad', format: 'json', failOn: 'fail' });
+    const parsed = JSON.parse(renderSarif(result));
+    const sarifResults = parsed.runs[0].results;
+    const failResult = sarifResults.find((r: any) => r.level === 'error');
+    const warnResult = sarifResults.find((r: any) => r.level === 'warning');
+    expect(failResult || warnResult).toBeDefined();
+  });
+
+  it('renderSarif uses repo-relative forward-slash paths', () => {
+    const result = scan({ root: 'test/fixtures/bad', format: 'json', failOn: 'fail' });
+    const parsed = JSON.parse(renderSarif(result));
+    const sarifResults = parsed.runs[0].results;
+    for (const r of sarifResults) {
+      const uri = r.locations[0].physicalLocation.artifactLocation.uri;
+      expect(uri).not.toContain('\\');
+      expect(uri).not.toContain(':');
+    }
+  });
 });
 
 // ── resolveFailOn ───────────────────────────────────────────────────────────
@@ -228,6 +266,36 @@ describe('CLI integration', () => {
     expect(stdout).toBe('');
     expect(stderr).toContain('Error: cannot read root path: ./definitely-not-existing-path');
     expect(stderr).not.toContain('at ');
+    expect(exitCode).toBe(2);
+  });
+  it('--format sarif outputs valid SARIF JSON', () => {
+    const { stdout, exitCode } = runCli(['scan', '.', '--format', 'sarif']);
+    const parsed = JSON.parse(stdout);
+    expect(parsed.version).toBe('2.1.0');
+    expect(parsed.$schema).toBe('https://json.schemastore.org/sarif-2.1.0.json');
+    expect(Array.isArray(parsed.runs)).toBe(true);
+    expect(exitCode).toBe(0);
+  });
+
+  it('--format sarif still prints results when findings cause exit 1', () => {
+    const { stdout, exitCode } = runCli(['scan', 'test/fixtures/bad', '--format', 'sarif', '--fail-on', 'error']);
+    expect(exitCode).toBe(1);
+    const parsed = JSON.parse(stdout);
+    expect(Array.isArray(parsed.runs)).toBe(true);
+    expect(parsed.runs[0].results.length).toBeGreaterThan(0);
+  });
+
+  it('--format sarif with --fail-on off exits 0 even with findings', () => {
+    const { stdout, exitCode } = runCli(['scan', 'test/fixtures/bad', '--format', 'sarif', '--fail-on', 'off']);
+    expect(exitCode).toBe(0);
+    const parsed = JSON.parse(stdout);
+    expect(Array.isArray(parsed.runs)).toBe(true);
+    expect(parsed.runs[0].results.length).toBeGreaterThan(0);
+  });
+
+  it('unknown --format exits 2', () => {
+    const { stderr, exitCode } = runCli(['scan', '.', '--format', 'notreal']);
+    expect(stderr).toContain('Unknown format: notreal');
     expect(exitCode).toBe(2);
   });
 });

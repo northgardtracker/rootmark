@@ -2,6 +2,15 @@
 
 All notable public releases of `agents-md-xray`.
 
+## Unreleased
+
+### Added
+
+- SARIF v2.1.0 output support via `--format sarif`.
+- Severity mapping: `fail` → `error`, `warn` → `warning`, `info` → `note`.
+- Rule descriptors and result locations mapped to SARIF spec.
+- GitHub Actions usage docs updated with SARIF upload example.
+
 ## v0.1.3
 
 First published CLI-first release.

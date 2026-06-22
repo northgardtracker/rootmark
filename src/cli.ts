@@ -2,7 +2,7 @@
 import { accessSync, constants, statSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { scan } from './scanner.js';
-import { renderJson, renderText, shouldFail } from './reporters.js';
+import { renderJson, renderSarif, renderText, shouldFail } from './reporters.js';
 import { resolveFailOn } from './types.js';
 import type { Severity } from './types.js';
 
@@ -32,10 +32,10 @@ function main(argv: string[]): number {
     return 2;
   }
 
-  // --format pretty|json (default: pretty)
+  // --format pretty|json|sarif (default: pretty)
   const formatFlag = getFlagValue(argv, '--format');
   const hasJsonAlias = argv.includes('--json');
-  let format: 'pretty' | 'json' = 'pretty';
+  let format: 'pretty' | 'json' | 'sarif' = 'pretty';
   if (hasJsonAlias) {
     format = 'json';
   } else if (formatFlag) {
@@ -43,8 +43,10 @@ function main(argv: string[]): number {
       format = 'json';
     } else if (formatFlag === 'pretty') {
       format = 'pretty';
+    } else if (formatFlag === 'sarif') {
+      format = 'sarif';
     } else {
-      console.error(`Unknown format: ${formatFlag}. Valid formats: pretty, json`);
+      console.error(`Unknown format: ${formatFlag}. Valid formats: pretty, json, sarif`);
       return 2;
     }
   }
@@ -55,7 +57,7 @@ function main(argv: string[]): number {
 
   try {
     const result = scan({ root, format, failOn: failOn === 'off' ? 'fail' : failOn });
-    console.log(format === 'json' ? renderJson(result) : renderText(result));
+    console.log(format === 'json' ? renderJson(result) : format === 'sarif' ? renderSarif(result) : renderText(result));
     return shouldFail(result, failOn) ? 1 : 0;
   } catch (error) {
     if (isPathAccessError(error)) {
@@ -100,7 +102,7 @@ Usage:
   agents-md-xray scan [root] [options]
 
 Options:
-  --format <pretty|json>         Output format (default: pretty)
+  --format <pretty|json|sarif>   Output format (default: pretty)
   --json                         Alias for --format json
   --fail-on <warning|error|off>  Exit 1 when findings match this level (default: error)
   --help, -h                     Show this help
@@ -110,6 +112,7 @@ Examples:
   agents-md-xray scan .
   agents-md-xray scan . --format json
   agents-md-xray scan . --json
+  agents-md-xray scan . --format sarif
   agents-md-xray scan . --fail-on warning
   agents-md-xray scan . --fail-on off
 `);

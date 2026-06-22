@@ -1,6 +1,6 @@
 # SARIF Output Design
 
-Status: design only. SARIF output is not implemented yet.
+Status: initial implementation completed. SARIF output is available via `--format sarif`.
 
 ## Summary
 
@@ -12,7 +12,6 @@ The goal is to let CI systems and code scanning tools consume scanner findings i
 
 This design does not implement:
 
-- SARIF output
 - GitHub Code Scanning upload
 - a GitHub Marketplace Action
 - PR comments
@@ -29,7 +28,7 @@ Current behavior:
 
 - scans local instruction files
 - runs rule-based checks
-- reports findings in pretty text or JSON
+- reports findings in pretty text, JSON, or SARIF
 - never executes commands found in scanned files
 - does not collect telemetry
 - does not upload scanned content by default
@@ -203,14 +202,12 @@ A future implementation should include:
 
 ## Documentation updates for implementation PR
 
-When SARIF is implemented, update:
+The following were updated when SARIF was implemented:
 
 - README CLI reference
 - `docs/github-actions.md`
-- CHANGELOG for the release
+- CHANGELOG `Unreleased` section
 - examples if helpful
-
-Until implementation lands, docs must continue to say SARIF output is not implemented yet.
 
 ## Open questions
 

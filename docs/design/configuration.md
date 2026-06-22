@@ -73,11 +73,10 @@ Use a small JSON file named `agents-md-xray.config.json` at the scan root.
 
 ```json
 {
-  "$schema": "https://example.com/agents-md-xray.schema.json",
   "rules": {
     "context-bloat.too-long": {
       "level": "warning",
-      "maxLines": 500
+      "maxWords": 500
     },
     "dangerous-instruction.skip-tests": {
       "level": "error"
@@ -98,7 +97,7 @@ Each key is a stable rule ID. Each value may contain:
   - `warning` maps to internal severity `warn`.
   - `info` maps to internal severity `info`.
   - `off` removes findings for that rule entirely.
-- threshold keys (optional, rule-specific): for example, `maxLines` or `maxWords` for `context-bloat.too-long`.
+- threshold keys (optional, rule-specific): for example, `maxWords` for `context-bloat.too-long`.
 
 If a rule is absent from config, the hardcoded default remains unchanged.
 
@@ -199,7 +198,5 @@ Until implementation lands, public docs must continue to say configuration files
 
 ## Open questions
 
-- Should `maxLines` or `maxWords` be the tunable threshold for `context-bloat.too-long`?
-- Should the config file name be `agents-md-xray.config.json` or `.agents-md-xray.json`?
 - Should `include` and `exclude` ship in the first implementation or remain a future extension?
 - Should the config schema ship with a published JSON Schema file for editor validation?
