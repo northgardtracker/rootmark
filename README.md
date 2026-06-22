@@ -137,6 +137,7 @@ instruction files: AGENTS.md
 
 ## Documentation
 
+- [SARIF output design](docs/design/sarif-output.md)
 - [GitHub Actions usage](docs/github-actions.md)
 - [Examples](docs/examples/README.md)
 - [Changelog](CHANGELOG.md)
