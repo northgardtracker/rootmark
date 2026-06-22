@@ -26,7 +26,8 @@ export function renderJson(result: ScanResult): string {
   return JSON.stringify(result, null, 2);
 }
 
-export function shouldFail(result: ScanResult, failOn: Severity): boolean {
+export function shouldFail(result: ScanResult, failOn: Severity | 'off'): boolean {
+  if (failOn === 'off') return false;
   const order: Record<Severity, number> = { info: 1, warn: 2, fail: 3 };
   return result.findings.some((f) => order[f.severity] >= order[failOn]);
 }

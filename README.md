@@ -7,9 +7,9 @@
   <code>&nbsp;└─────────────────────────────────────────┘&nbsp;</code><br />
   <br />
   <a href="https://www.npmjs.com/package/agents-md-xray"><img src="https://img.shields.io/npm/v/agents-md-xray?style=flat-square&color=cb3837" alt="npm version" /></a>
-  <a href="https://github.com/wolfhound115/agents-md-xray/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/wolfhound115/agents-md-xray/ci.yml?branch=main&style=flat-square&label=CI" alt="CI" /></a>
-  <a href="https://github.com/wolfhound115/agents-md-xray/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue?style=flat-square" alt="License" /></a>
-  <a href="https://github.com/wolfhound115/agents-md-xray/pulls"><img src="https://img.shields.io/badge/PRs-welcome-brightgreen?style=flat-square" alt="PRs Welcome" /></a>
+  <a href="https://github.com/northgardtracker/agents-md-xray/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/northgardtracker/agents-md-xray/ci.yml?branch=main&style=flat-square&label=CI" alt="CI" /></a>
+  <a href="https://github.com/northgardtracker/agents-md-xray/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue?style=flat-square" alt="License" /></a>
+  <a href="https://github.com/northgardtracker/agents-md-xray/pulls"><img src="https://img.shields.io/badge/PRs-welcome-brightgreen?style=flat-square" alt="PRs Welcome" /></a>
   <img src="https://img.shields.io/badge/TypeScript-strict-3178c6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript" />
 </p>
 
@@ -34,10 +34,10 @@ That's it. It auto-discovers `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, and `.github
 - 🔍 **Auto-discovery** — Finds all agent instruction files recursively
 - ⚠️ **Dangerous instruction detection** — Catches prompt injection, test skipping, secret exposure
 - 📏 **Context bloat analysis** — Warns when instructions are too long for efficient agent use
-- 🔗 **Stale command detection** — Verifies `pnpm run <script>` references match `package.json`
+- 🔗 **Stale command detection** — Verifies `pnpm test`, `pnpm run lint`, etc. match `package.json`
 - 📋 **Required section checks** — Ensures setup, test, style, safety, and PR sections exist
-- 📊 **Multiple output formats** — Text, JSON, and SARIF for CI/CD integration
-- 🎯 **Configurable fail threshold** — Fail CI on `fail`, `warn`, or `info` severity
+- 📊 **Output formats** — Pretty (human-readable) and JSON for automation
+- 🎯 **Configurable fail threshold** — Fail CI on `error`, `warning`, or disable with `off`
 
 ## Installation
 
@@ -57,17 +57,34 @@ npx agents-md-xray scan .
 ### Scan a repository
 
 ```bash
-# Default scan with text output
+# Default scan with pretty output
 agents-md-xray scan .
 
 # JSON output for automation
-agents-md-xray scan . --json
+agents-md-xray scan . --format json
+agents-md-xray scan . --json          # shorthand
 
 # Fail CI on any warning or worse
-agents-md-xray scan . --fail-on warn
+agents-md-xray scan . --fail-on warning
+
+# Never fail (just report)
+agents-md-xray scan . --fail-on off
 
 # Scan a specific directory
 agents-md-xray scan ./packages/my-lib
+```
+
+### CLI Reference
+
+```
+agents-md-xray scan [root] [options]
+
+Options:
+  --format <pretty|json>         Output format (default: pretty)
+  --json                         Alias for --format json
+  --fail-on <warning|error|off>  Exit 1 when findings match this level (default: error)
+  --help, -h                     Show help
+  --version                      Show version
 ```
 
 ### Example Output
@@ -83,7 +100,7 @@ instruction files: AGENTS.md
 
 [FAIL] stale-command.missing-package-script (AGENTS.md)
   Referenced npm script does not exist: Instruction references script "deploy", but package.json does not define it.
-  Evidence: pnpm run deploy
+  Evidence: pnpm deploy
   Fix: Add "deploy" to package.json scripts, or update the agent instruction.
 
 [WARN] context-bloat.too-long (AGENTS.md)
@@ -95,18 +112,20 @@ instruction files: AGENTS.md
 
 | ID | Severity | What it checks |
 |:---|:---------|:---------------|
-| `instruction-file.missing` | 🔴 fail | No AGENTS.md / CLAUDE.md / GEMINI.md found |
-| `required-section.setup` | 🔴 fail | Missing setup/install commands section |
-| `required-section.test` | 🔴 fail | Missing test/validation commands section |
-| `required-section.style` | 🟡 warn | Missing code style conventions section |
-| `required-section.safety` | 🟡 warn | Missing safety boundaries section |
-| `required-section.pr` | 🟡 warn | Missing PR/review expectations section |
-| `dangerous-instruction.system-override` | 🔴 fail | Prompt injection pattern ("ignore previous instructions") |
-| `dangerous-instruction.skip-tests` | 🔴 fail | Blanket test-skipping instruction |
-| `dangerous-instruction.reckless-write` | 🔴 fail | Overly broad write permission |
-| `dangerous-instruction.secret-exposure` | 🔴 fail | Instruction to print secrets or env vars |
-| `context-bloat.too-long` | 🟡/🔴 | File exceeds 900 words (warn) or 1600 words (fail) |
-| `stale-command.missing-package-script` | 🔴 fail | Referenced npm script doesn't exist in package.json |
+| `instruction-file.missing` | 🔴 error | No AGENTS.md / CLAUDE.md / GEMINI.md found |
+| `required-section.setup` | 🔴 error | Missing setup/install commands section |
+| `required-section.test` | 🔴 error | Missing test/validation commands section |
+| `required-section.style` | 🟡 warning | Missing code style conventions section |
+| `required-section.safety` | 🟡 warning | Missing safety boundaries section |
+| `required-section.pr` | 🟡 warning | Missing PR/review expectations section |
+| `dangerous-instruction.system-override` | 🔴 error | Prompt injection pattern ("ignore previous instructions") |
+| `dangerous-instruction.skip-tests` | 🔴 error | Blanket test-skipping instruction |
+| `dangerous-instruction.reckless-write` | 🔴 error | Overly broad write permission |
+| `dangerous-instruction.secret-exposure` | 🔴 error | Instruction to print secrets or env vars |
+| `context-bloat.too-long` | 🟡/🔴 | File exceeds 900 words (warning) or 1600 words (error) |
+| `stale-command.missing-package-script` | 🔴 error | Referenced npm script doesn't exist in package.json |
+
+> **Note on severity labels:** Internally the scanner uses `fail`, `warn`, and `info`. The CLI maps `error` → `fail` and `warning` → `warn`. Both forms are accepted by `--fail-on`.
 
 ## CI Integration
 
@@ -127,7 +146,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: npx agents-md-xray scan . --fail-on warn
+      - run: npx agents-md-xray scan . --fail-on warning
 ```
 
 ## Design Principles
@@ -140,16 +159,16 @@ jobs:
 
 ## Roadmap
 
-- [x] CLI scanner with text/JSON output
+- [x] CLI scanner with pretty/JSON output
 - [x] Required section detection
 - [x] Dangerous instruction detection
 - [x] Context bloat analysis
-- [x] Stale command detection
-- [ ] 🚧 GitHub Action with PR comments
-- [ ] 🚧 SARIF output for GitHub Code Scanning
-- [ ] 📋 Nested AGENTS.md conflict detection
-- [ ] 📋 MCP config inventory and risk preview
-- [ ] 📋 Auto-fix mode for safe, mechanical improvements
+- [x] Stale command detection (run + direct shorthand)
+- [ ] SARIF output for GitHub Code Scanning ([#1](https://github.com/northgardtracker/agents-md-xray/issues/1))
+- [ ] GitHub Action with PR comments ([#2](https://github.com/northgardtracker/agents-md-xray/issues/2))
+- [ ] Nested AGENTS.md conflict detection ([#3](https://github.com/northgardtracker/agents-md-xray/issues/3))
+- [ ] MCP config inventory and risk preview ([#4](https://github.com/northgardtracker/agents-md-xray/issues/4))
+- [ ] Auto-fix mode for safe, mechanical improvements ([#5](https://github.com/northgardtracker/agents-md-xray/issues/5))
 
 ## Contributing
 
@@ -157,7 +176,7 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 
 ## License
 
-MIT © [agents-md-xray contributors](https://github.com/wolfhound115/agents-md-xray/graphs/contributors)
+MIT © [agents-md-xray contributors](https://github.com/northgardtracker/agents-md-xray/graphs/contributors)
 
 ---
 

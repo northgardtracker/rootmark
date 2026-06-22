@@ -6,14 +6,14 @@ Thank you for your interest in contributing! Here's how to get started.
 
 ```bash
 # Clone the repo
-git clone https://github.com/wolfhound115/agents-md-xray.git
+git clone https://github.com/northgardtracker/agents-md-xray.git
 cd agents-md-xray
 
 # Install dependencies
 pnpm install
 
 # Run the full validation pipeline
-pnpm ci
+pnpm run ci
 ```
 
 ## Available Scripts
@@ -25,7 +25,7 @@ pnpm ci
 | `pnpm test` | Run tests with Vitest |
 | `pnpm typecheck` | Type-check without emitting |
 | `pnpm lint` | Run ESLint |
-| `pnpm ci` | Run typecheck + test + build |
+| `pnpm run ci` | Run typecheck + test + build |
 
 ## Adding a New Rule
 
@@ -56,14 +56,14 @@ test: add edge case for empty AGENTS.md
 
 1. Fork the repo and create a feature branch
 2. Make your changes with tests
-3. Run `pnpm ci` to verify everything passes
+3. Run `pnpm run ci` to verify everything passes
 4. Open a PR with a clear description
 5. Respond to review feedback
 
 ## Reporting Issues
 
-- Use the [bug report template](https://github.com/wolfhound115/agents-md-xray/issues/new?template=bug_report.md) for bugs
-- Use the [feature request template](https://github.com/wolfhound115/agents-md-xray/issues/new?template=feature_request.md) for new ideas
+- Use the [bug report template](https://github.com/northgardtracker/agents-md-xray/issues/new?template=bug_report.md) for bugs
+- Use the [feature request template](https://github.com/northgardtracker/agents-md-xray/issues/new?template=feature_request.md) for new ideas
 
 ## Code of Conduct
 

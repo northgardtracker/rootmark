@@ -4,7 +4,7 @@
 - Install dependencies: `pnpm install`
 
 ## Test commands
-- Run full validation: `pnpm ci`
+- Run full validation: `pnpm run ci`
 - Run tests only: `pnpm test`
 - Run typecheck only: `pnpm typecheck`
 

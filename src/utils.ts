@@ -40,11 +40,10 @@ export function loadPackageScripts(root: string): Set<string> {
 }
 
 export function rel(root: string, file: string): string {
-  return relative(root, file).replaceAll('\\\\', '/');
+  return relative(root, file).replaceAll('\\', '/');
 }
 
 function walk(dir: string, onFile: (path: string, name: string) => void): void {
-  if (!existsSync(dir)) return;
   for (const entry of readdirSync(dir)) {
     if (IGNORED.has(entry)) continue;
     const full = join(dir, entry);

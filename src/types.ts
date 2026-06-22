@@ -1,5 +1,8 @@
 export type Severity = 'info' | 'warn' | 'fail';
 
+/** Public CLI severity names and their internal mapping. */
+export type PublicSeverity = 'off' | 'warning' | 'error';
+
 export interface Finding {
   id: string;
   severity: Severity;
@@ -12,7 +15,7 @@ export interface Finding {
 
 export interface ScanOptions {
   root: string;
-  format: 'text' | 'json' | 'sarif';
+  format: 'pretty' | 'json';
   failOn: Severity;
 }
 
@@ -21,4 +24,22 @@ export interface ScanResult {
   score: number;
   files: string[];
   findings: Finding[];
+}
+
+/**
+ * Resolve a public severity name (or legacy alias) to an internal Severity.
+ * Returns undefined for 'off' (meaning never fail).
+ */
+export function resolveFailOn(value: string): Severity | 'off' {
+  const v = value.toLowerCase();
+  // Public names
+  if (v === 'off') return 'off';
+  if (v === 'warning') return 'warn';
+  if (v === 'error') return 'fail';
+  // Legacy aliases
+  if (v === 'fail') return 'fail';
+  if (v === 'warn') return 'warn';
+  if (v === 'info') return 'info';
+  // Default
+  return 'fail';
 }
