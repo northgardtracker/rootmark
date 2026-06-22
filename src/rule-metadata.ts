@@ -148,6 +148,17 @@ export const RULE_METADATA: readonly RuleMetadata[] = [
     },
   },
   {
+    id: 'contradictory-rules.duplicate-tool-reference',
+    name: 'Competing tool references',
+    shortDescription: { text: 'Instruction file references competing tools in the same category.' },
+    fullDescription: {
+      text: 'The same instruction file mentions 2+ competing tools from the same category (for example ESLint and Biome for linting, or Jest and Vitest for testing). This is a heuristic, regex-based warning, not a semantic analyzer.',
+    },
+    help: {
+      text: 'Pick one preferred tool per category, or clearly document when each tool applies (for example, "use ESLint for app code and Biome only for generated files").',
+    },
+  },
+  {
     id: 'vague-instructions.no-commands',
     name: 'No actionable commands found',
     shortDescription: { text: 'Instruction file contains no concrete commands.' },

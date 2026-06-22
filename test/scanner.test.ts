@@ -140,6 +140,69 @@ describe('vague-instructions rule', () => {
     expect(findings).toHaveLength(0);
   });
 });
+// ── Contradictory tool references rule ──────────────────────────────────────
+
+describe('contradictory-rules rule', () => {
+  it('flags competing lint/format tools', () => {
+    const result = scan({ root: 'test/fixtures/contradictory-lint-tools', format: 'json', failOn: 'fail' });
+    const findings = result.findings.filter((f) => f.id === 'contradictory-rules.duplicate-tool-reference');
+    const lintFinding = findings.find((f) => f.evidence?.startsWith('lint:'));
+    expect(lintFinding).toBeDefined();
+    expect(lintFinding?.evidence).toContain('eslint');
+    expect(lintFinding?.evidence).toContain('biome');
+    expect(lintFinding?.severity).toBe('warn');
+    expect(lintFinding?.file).toBe('AGENTS.md');
+  });
+
+  it('flags competing JS/TS test tools', () => {
+    const result = scan({ root: 'test/fixtures/contradictory-test-tools', format: 'json', failOn: 'fail' });
+    const findings = result.findings.filter((f) => f.id === 'contradictory-rules.duplicate-tool-reference');
+    const testFinding = findings.find((f) => f.evidence?.startsWith('test:'));
+    expect(testFinding).toBeDefined();
+    expect(testFinding?.evidence).toContain('jest');
+    expect(testFinding?.evidence).toContain('vitest');
+  });
+
+  it('flags competing package managers', () => {
+    const result = scan({ root: 'test/fixtures/contradictory-package-managers', format: 'json', failOn: 'fail' });
+    const findings = result.findings.filter((f) => f.id === 'contradictory-rules.duplicate-tool-reference');
+    const pmFinding = findings.find((f) => f.evidence?.startsWith('package-manager:'));
+    expect(pmFinding).toBeDefined();
+    expect(pmFinding?.evidence).toContain('npm');
+    expect(pmFinding?.evidence).toContain('pnpm');
+  });
+
+  it('does not flag a fixture with one tool per category', () => {
+    const result = scan({ root: 'test/fixtures/non-contradictory-single-tool', format: 'json', failOn: 'fail' });
+    const findings = result.findings.filter((f) => f.id === 'contradictory-rules.duplicate-tool-reference');
+    expect(findings).toHaveLength(0);
+  });
+
+  it('does not flag the well-structured good fixture', () => {
+    const result = scan({ root: 'test/fixtures/good', format: 'json', failOn: 'fail' });
+    const findings = result.findings.filter((f) => f.id === 'contradictory-rules.duplicate-tool-reference');
+    expect(findings).toHaveLength(0);
+  });
+
+  it('produces deterministic sorted evidence', () => {
+    const result = scan({ root: 'test/fixtures/contradictory-lint-tools', format: 'json', failOn: 'fail' });
+    const findings = result.findings.filter((f) => f.id === 'contradictory-rules.duplicate-tool-reference');
+    const lintFinding = findings.find((f) => f.evidence?.startsWith('lint:'));
+    expect(lintFinding?.evidence).toMatch(/^lint: [a-z, ]+$/);
+  });
+});
+  it('does not flag a clearly scoped boundary between competing tools', () => {
+    const result = scan({ root: 'test/fixtures/non-contradictory-scoped-tools', format: 'json', failOn: 'fail' });
+    const findings = result.findings.filter((f) => f.id === 'contradictory-rules.duplicate-tool-reference');
+    expect(findings).toHaveLength(0);
+  });
+
+  it('does not flag a hyphenated tool name like run-ava-tests near another test tool', () => {
+    const result = scan({ root: 'test/fixtures/non-contradictory-hyphenated-tool-name', format: 'json', failOn: 'fail' });
+    const findings = result.findings.filter((f) => f.id === 'contradictory-rules.duplicate-tool-reference');
+    expect(findings).toHaveLength(0);
+  });
+
 
 // ── Reporters ───────────────────────────────────────────────────────────────
 
@@ -219,7 +282,7 @@ describe('reporters', () => {
     const parsed = JSON.parse(renderSarif(result));
     const rules = parsed.runs[0].tool.driver.rules;
     expect(Array.isArray(rules)).toBe(true);
-    expect(rules.length).toBeGreaterThanOrEqual(13);
+    expect(rules.length).toBeGreaterThanOrEqual(14);
     expect(parsed.runs[0].results).toHaveLength(0);
   });
 
@@ -241,6 +304,7 @@ describe('reporters', () => {
       'context-bloat.too-long',
       'stale-command.missing-package-script',
       'vague-instructions.no-commands',
+      'contradictory-rules.duplicate-tool-reference',
     ];
     for (const id of expectedIds) {
       expect(ruleIds).toContain(id);
