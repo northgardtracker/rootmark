@@ -1,6 +1,6 @@
 # SARIF Output Design
 
-Status: initial implementation completed. SARIF output is available via `--format sarif`.
+Status: initial implementation completed. SARIF output is available via `--format sarif`. The implementation now also emits a stable full `reportingDescriptor` catalog (see "Stable rule descriptor catalog" below) so clean scans still describe every known rule.
 
 ## Summary
 
@@ -155,6 +155,32 @@ docs/agents/CLAUDE.md
 ```
 
 Do not emit absolute local paths by default.
+
+## Stable rule descriptor catalog
+
+`tool.driver.rules` is now sourced from a centralized rule metadata catalog (`src/rule-metadata.ts`) rather than being derived only from current `findings`.
+
+This means:
+
+- Clean scans still emit descriptors for every known rule.
+- SARIF consumers can rely on a stable rule catalog across runs.
+- Each descriptor carries `id`, `name`, `shortDescription.text`, `fullDescription.text`, and `help.text`.
+- If a finding references a rule ID that is not yet in the catalog, a small fallback descriptor is added so SARIF consumers do not see unknown rule IDs without a `reportingDescriptor`.
+
+Known rule IDs in the catalog:
+
+- `instruction-file.missing`
+- `required-section.setup`
+- `required-section.test`
+- `required-section.style`
+- `required-section.safety`
+- `required-section.pr`
+- `dangerous-instruction.system-override`
+- `dangerous-instruction.skip-tests`
+- `dangerous-instruction.reckless-write`
+- `dangerous-instruction.secret-exposure`
+- `context-bloat.too-long`
+- `stale-command.missing-package-script`
 
 ## Invocation metadata
 

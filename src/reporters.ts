@@ -1,4 +1,5 @@
 import type { ScanResult, Severity } from './types.js';
+import { getRuleMetadata, RULE_METADATA, type RuleMetadata } from './rule-metadata.js';
 
 export function renderText(result: ScanResult): string {
   const lines: string[] = [];
@@ -38,26 +39,19 @@ export function renderSarif(result: ScanResult): string {
   const SARIF_VERSION = '2.1.0';
   const SARIF_SCHEMA = 'https://json.schemastore.org/sarif-2.1.0.json';
 
-  const seenRuleIds = new Set<string>();
-  const rules: Array<{
-    id: string;
-    name: string;
-    shortDescription: { text: string };
-    fullDescription: { text: string };
-    help: { text: string };
-  }> = [];
-
-  for (const finding of result.findings) {
-    if (seenRuleIds.has(finding.id)) continue;
-    seenRuleIds.add(finding.id);
-    rules.push({
-      id: finding.id,
-      name: finding.id,
-      shortDescription: { text: finding.title },
-      fullDescription: { text: finding.message },
-      help: { text: finding.remediation ?? finding.message },
-    });
+  // Emit the full stable rule catalog so clean scans still describe every
+  // known rule. Any finding rule IDs that are not in the catalog get a
+  // fallback descriptor so SARIF consumers always see a valid rule.
+  const ruleMap = new Map<string, RuleMetadata>();
+  for (const rule of RULE_METADATA) {
+    ruleMap.set(rule.id, rule);
   }
+  for (const finding of result.findings) {
+    if (!ruleMap.has(finding.id)) {
+      ruleMap.set(finding.id, getRuleMetadata(finding.id));
+    }
+  }
+  const rules: RuleMetadata[] = Array.from(ruleMap.values());
 
   const sarifResults = result.findings.map((finding) => {
     let uri: string;

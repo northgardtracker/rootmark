@@ -174,6 +174,72 @@ describe('reporters', () => {
       expect(uri).not.toContain(':');
     }
   });
+
+  it('renderSarif emits the full rule catalog on clean scans', () => {
+    const result = scan({ root: 'test/fixtures/good', format: 'json', failOn: 'fail' });
+    expect(result.findings).toHaveLength(0);
+    const parsed = JSON.parse(renderSarif(result));
+    const rules = parsed.runs[0].tool.driver.rules;
+    expect(Array.isArray(rules)).toBe(true);
+    expect(rules.length).toBeGreaterThanOrEqual(12);
+    expect(parsed.runs[0].results).toHaveLength(0);
+  });
+
+  it('renderSarif descriptors include all known rule IDs', () => {
+    const result = scan({ root: 'test/fixtures/good', format: 'json', failOn: 'fail' });
+    const parsed = JSON.parse(renderSarif(result));
+    const ruleIds = parsed.runs[0].tool.driver.rules.map((r: { id: string }) => r.id);
+    const expectedIds = [
+      'instruction-file.missing',
+      'required-section.setup',
+      'required-section.test',
+      'required-section.style',
+      'required-section.safety',
+      'required-section.pr',
+      'dangerous-instruction.system-override',
+      'dangerous-instruction.skip-tests',
+      'dangerous-instruction.reckless-write',
+      'dangerous-instruction.secret-exposure',
+      'context-bloat.too-long',
+      'stale-command.missing-package-script',
+    ];
+    for (const id of expectedIds) {
+      expect(ruleIds).toContain(id);
+    }
+  });
+
+  it('renderSarif descriptors include shortDescription, fullDescription, and help', () => {
+    const result = scan({ root: 'test/fixtures/good', format: 'json', failOn: 'fail' });
+    const parsed = JSON.parse(renderSarif(result));
+    for (const rule of parsed.runs[0].tool.driver.rules) {
+      expect(typeof rule.id).toBe('string');
+      expect(typeof rule.name).toBe('string');
+      expect(rule.shortDescription?.text).toBeTypeOf('string');
+      expect(rule.shortDescription.text.length).toBeGreaterThan(0);
+      expect(rule.fullDescription?.text).toBeTypeOf('string');
+      expect(rule.fullDescription.text.length).toBeGreaterThan(0);
+      expect(rule.help?.text).toBeTypeOf('string');
+      expect(rule.help.text.length).toBeGreaterThan(0);
+    }
+  });
+
+  it('renderSarif results still reference matching ruleIds in the catalog', () => {
+    const result = scan({ root: 'test/fixtures/bad', format: 'json', failOn: 'fail' });
+    const parsed = JSON.parse(renderSarif(result));
+    const catalogIds = new Set(
+      parsed.runs[0].tool.driver.rules.map((r: { id: string }) => r.id),
+    );
+    for (const r of parsed.runs[0].results) {
+      expect(catalogIds.has(r.ruleId)).toBe(true);
+    }
+  });
+
+  it('renderSarif severity mapping still maps fail->error', () => {
+    const result = scan({ root: 'test/fixtures/bad', format: 'json', failOn: 'fail' });
+    const parsed = JSON.parse(renderSarif(result));
+    const sarifResults = parsed.runs[0].results;
+    expect(sarifResults.some((r: { level: string }) => r.level === 'error')).toBe(true);
+  });
 });
 
 // ── resolveFailOn ───────────────────────────────────────────────────────────

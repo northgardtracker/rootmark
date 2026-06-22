@@ -10,6 +10,7 @@ All notable public releases of `agents-md-xray`.
 - Severity mapping: `fail` → `error`, `warn` → `warning`, `info` → `note`.
 - Rule descriptors and result locations mapped to SARIF spec.
 - GitHub Actions usage docs updated with SARIF upload example.
+- Stable full SARIF rule descriptor catalog emitted from a centralized rule metadata source, so clean scans still describe every known rule.
 
 ## v0.1.3
 
