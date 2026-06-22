@@ -1,0 +1,9 @@
+{
+  "name": "realistic-bad-stale-fixture",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  }
+}
