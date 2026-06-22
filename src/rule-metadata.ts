@@ -169,6 +169,28 @@ export const RULE_METADATA: readonly RuleMetadata[] = [
       text: 'Add exact setup and validation commands such as `pnpm install` and `pnpm run ci`, ideally inside fenced code blocks, so agents know exactly what to run.',
     },
   },
+  {
+    id: 'nested-conflict.contradictory-tools',
+    name: 'Nested instruction files reference competing tools',
+    shortDescription: { text: 'Parent and child instruction files reference different default tools.' },
+    fullDescription: {
+      text: 'A parent instruction file and a nested child instruction file mention different tools in the same category (lint/format, JS/TS test, or package manager). The child must either align with the parent or explicitly document the override boundary. This is a heuristic, regex-based check that reuses the strict tool-detection from the contradictory-rules module.',
+    },
+    help: {
+      text: 'Align the tool defaults between the parent and child instruction files, or explicitly document the override boundary in the child (for example, "Use Biome only for generated files").',
+    },
+  },
+  {
+    id: 'nested-conflict.missing-override',
+    name: 'Package directory has no local instruction override',
+    shortDescription: { text: 'A package/workspace directory inherits broad parent guidance without a local override.' },
+    fullDescription: {
+      text: 'A directory that contains package.json is treated as a package/workspace. If it has no local instruction file (AGENTS.md, CLAUDE.md, GEMINI.md, or .github/copilot-instructions.md) and an ancestor instruction file contains broad repo-wide wording (for example, "all packages", "repository-wide"), this rule warns so maintainers can add a local override or clarify the intent.',
+    },
+    help: {
+      text: 'Add a local AGENTS.md (or equivalent) in the package directory, or clarify in the parent that the broad guidance intentionally applies to every package.',
+    },
+  },
 ];
 
 const METADATA_BY_ID: Map<string, RuleMetadata> = new Map(

@@ -1,4 +1,10 @@
 import type { Finding } from '../types.js';
+import {
+  TOOL_CATEGORIES,
+  PROXIMITY_LIMIT,
+  findToolPositions,
+  hasScopedBoundary,
+} from './tool-detection.js';
 
 /**
  * Detect instruction files that reference competing tools within the same
@@ -28,79 +34,10 @@ import type { Finding } from '../types.js';
  * 3. Strict word boundaries: tool names are matched with negative lookbehind
  *    and lookahead around [A-Za-z0-9_-] so they are not detected inside
  *    hyphenated identifiers like `run-ava-tests` or `my-npm-wrapper`.
+ *
+ * Shared helpers (categories, tool positions, scoped boundary) live in
+ * `./tool-detection.ts` so the nested-conflicts rule can reuse them.
  */
-
-interface Category {
-  /** Short identifier used in deterministic evidence strings. */
-  id: string;
-  /** Human-readable category label used in messages. */
-  label: string;
-  /** Lowercase tool names. Matching is case-insensitive with strict boundaries. */
-  tools: string[];
-}
-
-const CATEGORIES: readonly Category[] = [
-  {
-    id: 'lint',
-    label: 'lint/format',
-    tools: ['eslint', 'biome', 'prettier', 'ruff', 'black']
-  },
-  {
-    id: 'test',
-    label: 'JavaScript/TypeScript test',
-    tools: ['jest', 'vitest', 'mocha', 'ava']
-  },
-  {
-    id: 'package-manager',
-    label: 'package manager',
-    tools: ['npm', 'pnpm', 'yarn']
-  }
-];
-
-/**
- * Maximum character distance between two tool mentions for them to be
- * considered competing. Tuned to catch contradictions within the same
- * paragraph or section while avoiding false positives across distant parts
- * of a long instruction file.
- */
-const PROXIMITY_LIMIT = 500;
-
-/**
- * Find all character positions where any tool from `tools` appears in `text`.
- * Uses negative lookbehind/lookahead around [A-Za-z0-9_-] so tool names are
- * not detected inside hyphenated identifiers like `run-ava-tests` or
- * `my-npm-wrapper`.
- */
-function findToolPositions(text: string, tools: readonly string[]): Map<string, number[]> {
-  const positions = new Map<string, number[]>();
-  for (const tool of tools) {
-    const re = new RegExp('(?<![A-Za-z0-9_-])' + tool + '(?![A-Za-z0-9_-])', 'gi');
-    const found: number[] = [];
-    let m: RegExpExecArray | null;
-    while ((m = re.exec(text)) !== null) {
-      found.push(m.index);
-    }
-    if (found.length > 0) positions.set(tool, found);
-  }
-  return positions;
-}
-
-/**
- * Check if the text between or near two tool mentions contains a scoped
- * boundary indicator (currently just the word "only"). This handles patterns
- * like "Use Biome only for generated files" where the tool is explicitly
- * scoped to a specific context.
- */
-function hasScopedBoundary(text: string, posA: number, posB: number): boolean {
-  const start = Math.min(posA, posB);
-  const end = Math.max(posA, posB);
-  // Look for "only" in a window from 100 chars before the earlier tool
-  // mention to 100 chars after the later one.
-  const windowStart = Math.max(0, start - 100);
-  const windowEnd = Math.min(text.length, end + 100);
-  const window = text.substring(windowStart, windowEnd);
-  return /\bonly\b/i.test(window);
-}
 
 /**
  * Given a map of tool -> positions, return the subset of tools that have at
@@ -138,7 +75,7 @@ function findCompetingTools(positions: Map<string, number[]>, text: string): str
 
 export function contradictoryRules(file: string, text: string): Finding[] {
   const findings: Finding[] = [];
-  for (const category of CATEGORIES) {
+  for (const category of TOOL_CATEGORIES) {
     const positions = findToolPositions(text, category.tools);
     const competing = findCompetingTools(positions, text);
     if (competing.length < 2) continue;

@@ -204,6 +204,69 @@ describe('contradictory-rules rule', () => {
   });
 
 
+
+// ── Nested instruction conflicts rule ───────────────────────────────────────
+
+describe('nested-conflicts rule', () => {
+  it('flags a parent/child lint-tool conflict', () => {
+    const result = scan({ root: 'test/fixtures/nested-conflict-tools', format: 'json', failOn: 'fail' });
+    const findings = result.findings.filter((f) => f.id === 'nested-conflict.contradictory-tools');
+    expect(findings.length).toBeGreaterThanOrEqual(1);
+    const f = findings[0];
+    expect(f.severity).toBe('warn');
+    expect(f.file).toBe('packages/api/AGENTS.md');
+    expect(f.evidence).toContain('lint:');
+    expect(f.evidence).toContain('AGENTS.md -> packages/api/AGENTS.md');
+  });
+
+  it('flags a parent/child test-tool conflict', () => {
+    const result = scan({ root: 'test/fixtures/nested-conflict-test-tools', format: 'json', failOn: 'fail' });
+    const findings = result.findings.filter((f) => f.id === 'nested-conflict.contradictory-tools');
+    expect(findings.length).toBeGreaterThanOrEqual(1);
+    const f = findings[0];
+    expect(f.evidence).toContain('test:');
+    expect(f.evidence).toContain('jest');
+    expect(f.evidence).toContain('vitest');
+  });
+
+  it('does not flag a scoped child override that uses only', () => {
+    const result = scan({ root: 'test/fixtures/nested-no-conflict-scoped-override', format: 'json', failOn: 'fail' });
+    const findings = result.findings.filter((f) => f.id === 'nested-conflict.contradictory-tools');
+    expect(findings).toHaveLength(0);
+  });
+
+  it('does not flag a parent/child pair that uses the same tools', () => {
+    const result = scan({ root: 'test/fixtures/nested-no-conflict-same-tool', format: 'json', failOn: 'fail' });
+    const findings = result.findings.filter((f) => f.id === 'nested-conflict.contradictory-tools');
+    expect(findings).toHaveLength(0);
+  });
+
+  it('flags a missing override when broad parent guidance has no local package file', () => {
+    const result = scan({ root: 'test/fixtures/nested-missing-override', format: 'json', failOn: 'fail' });
+    const findings = result.findings.filter((f) => f.id === 'nested-conflict.missing-override');
+    expect(findings.length).toBeGreaterThanOrEqual(1);
+    const f = findings[0];
+    expect(f.severity).toBe('warn');
+    expect(f.file).toBe('AGENTS.md');
+    expect(f.evidence).toContain('packages/api');
+    expect(f.evidence).toContain('package.json');
+  });
+
+  it('does not flag missing override when the package already has a local AGENTS.md', () => {
+    const result = scan({ root: 'test/fixtures/nested-has-local-override', format: 'json', failOn: 'fail' });
+    const findings = result.findings.filter((f) => f.id === 'nested-conflict.missing-override');
+    expect(findings).toHaveLength(0);
+  });
+
+  it('does not flag missing override when the nearest ancestor is not broad (regression)', () => {
+    // Root has broad wording, but packages/AGENTS.md (the NEAREST ancestor
+    // of packages/api) does NOT. The rule must use the nearest ancestor,
+    // not the most distant one (root).
+    const result = scan({ root: 'test/fixtures/nested-nearest-ancestor-missing-override', format: 'json', failOn: 'fail' });
+    const findings = result.findings.filter((f) => f.id === 'nested-conflict.missing-override');
+    expect(findings).toHaveLength(0);
+  });
+});
 // ── Reporters ───────────────────────────────────────────────────────────────
 
 describe('reporters', () => {
@@ -282,7 +345,7 @@ describe('reporters', () => {
     const parsed = JSON.parse(renderSarif(result));
     const rules = parsed.runs[0].tool.driver.rules;
     expect(Array.isArray(rules)).toBe(true);
-    expect(rules.length).toBeGreaterThanOrEqual(14);
+    expect(rules.length).toBeGreaterThanOrEqual(16);
     expect(parsed.runs[0].results).toHaveLength(0);
   });
 
@@ -305,6 +368,8 @@ describe('reporters', () => {
       'stale-command.missing-package-script',
       'vague-instructions.no-commands',
       'contradictory-rules.duplicate-tool-reference',
+      'nested-conflict.contradictory-tools',
+      'nested-conflict.missing-override',
     ];
     for (const id of expectedIds) {
       expect(ruleIds).toContain(id);

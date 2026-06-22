@@ -6,6 +6,11 @@ import { contextBloat } from './rules/context-bloat.js';
 import { staleCommands } from './rules/stale-commands.js';
 import { vagueInstructions } from './rules/vague-instructions.js';
 import { contradictoryRules } from './rules/contradictory-rules.js';
+import {
+  nestedToolConflicts,
+  nestedMissingOverride,
+  type InstructionFile,
+} from './rules/nested-conflicts.js';
 
 export function scan(options: ScanOptions): ScanResult {
   const files = findInstructionFiles(options.root);
@@ -22,16 +27,28 @@ export function scan(options: ScanOptions): ScanResult {
     });
   }
 
+  // Read every instruction file once, then run per-file rules and nested
+  // rules over the same in-memory list.
+  const instructionFiles: InstructionFile[] = [];
   for (const absolute of files) {
     const file = rel(options.root, absolute);
     const text = readText(absolute);
-    findings.push(...requiredSections(file, text));
-    findings.push(...dangerousInstructions(file, text));
-    findings.push(...contextBloat(file, text));
-    findings.push(...staleCommands(file, text, packageScripts));
-    findings.push(...vagueInstructions(file, text));
-    findings.push(...contradictoryRules(file, text));
+    instructionFiles.push({ absolute, file, text });
   }
+
+  for (const instr of instructionFiles) {
+    findings.push(...requiredSections(instr.file, instr.text));
+    findings.push(...dangerousInstructions(instr.file, instr.text));
+    findings.push(...contextBloat(instr.file, instr.text));
+    findings.push(...staleCommands(instr.file, instr.text, packageScripts));
+    findings.push(...vagueInstructions(instr.file, instr.text));
+    findings.push(...contradictoryRules(instr.file, instr.text));
+  }
+
+  // Nested rules run after per-file rules. They compare files against each
+  // other, so they need the full list.
+  findings.push(...nestedToolConflicts(instructionFiles));
+  findings.push(...nestedMissingOverride(instructionFiles, options.root));
 
   const score = scoreFindings(findings);
   return { root: options.root, score, files: files.map((f) => rel(options.root, f)), findings };
