@@ -11,12 +11,8 @@ permissions:
 
 jobs:
   ci:
-    name: CI (Node ${{ matrix.node-version }})
+    name: CI (Node 22)
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node-version: [20, 22]
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -24,10 +20,10 @@ jobs:
       - name: Install pnpm
         uses: pnpm/action-setup@v4
 
-      - name: Setup Node.js ${{ matrix.node-version }}
+      - name: Setup Node.js 22
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version: 22
           cache: pnpm
 
       - name: Install dependencies
