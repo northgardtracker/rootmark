@@ -104,6 +104,43 @@ describe('stale-commands rule', () => {
   });
 });
 
+// ── Vague instructions rule ─────────────────────────────────────────────────
+
+describe('vague-instructions rule', () => {
+  it('flags an instruction file with prose but no actionable commands', () => {
+    const result = scan({ root: 'test/fixtures/vague-no-commands', format: 'json', failOn: 'fail' });
+    const findings = result.findings.filter((f) => f.id === 'vague-instructions.no-commands');
+    expect(findings).toHaveLength(1);
+    expect(findings[0].severity).toBe('warn');
+    expect(findings[0].file).toBe('AGENTS.md');
+    expect(findings[0].remediation).toBeTruthy();
+  });
+
+  it('does not flag a file that has at least one inline command backtick', () => {
+    const result = scan({ root: 'test/fixtures/actionable-inline-command', format: 'json', failOn: 'fail' });
+    const findings = result.findings.filter((f) => f.id === 'vague-instructions.no-commands');
+    expect(findings).toHaveLength(0);
+  });
+
+  it('does not flag a file that has at least one fenced code block', () => {
+    const result = scan({ root: 'test/fixtures/actionable-code-block', format: 'json', failOn: 'fail' });
+    const findings = result.findings.filter((f) => f.id === 'vague-instructions.no-commands');
+    expect(findings).toHaveLength(0);
+  });
+
+  it('still flags a file whose only backticks wrap non-command identifiers', () => {
+    const result = scan({ root: 'test/fixtures/backtick-identifiers-only', format: 'json', failOn: 'fail' });
+    const findings = result.findings.filter((f) => f.id === 'vague-instructions.no-commands');
+    expect(findings).toHaveLength(1);
+  });
+
+  it('does not flag the well-structured good fixture', () => {
+    const result = scan({ root: 'test/fixtures/good', format: 'json', failOn: 'fail' });
+    const findings = result.findings.filter((f) => f.id === 'vague-instructions.no-commands');
+    expect(findings).toHaveLength(0);
+  });
+});
+
 // ── Reporters ───────────────────────────────────────────────────────────────
 
 describe('reporters', () => {
@@ -182,7 +219,7 @@ describe('reporters', () => {
     const parsed = JSON.parse(renderSarif(result));
     const rules = parsed.runs[0].tool.driver.rules;
     expect(Array.isArray(rules)).toBe(true);
-    expect(rules.length).toBeGreaterThanOrEqual(12);
+    expect(rules.length).toBeGreaterThanOrEqual(13);
     expect(parsed.runs[0].results).toHaveLength(0);
   });
 
@@ -203,6 +240,7 @@ describe('reporters', () => {
       'dangerous-instruction.secret-exposure',
       'context-bloat.too-long',
       'stale-command.missing-package-script',
+      'vague-instructions.no-commands',
     ];
     for (const id of expectedIds) {
       expect(ruleIds).toContain(id);

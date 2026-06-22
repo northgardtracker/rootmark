@@ -147,6 +147,17 @@ export const RULE_METADATA: readonly RuleMetadata[] = [
       text: 'Add the missing script to package.json, or update the agent instruction to match existing scripts.',
     },
   },
+  {
+    id: 'vague-instructions.no-commands',
+    name: 'No actionable commands found',
+    shortDescription: { text: 'Instruction file contains no concrete commands.' },
+    fullDescription: {
+      text: 'Agent instruction file contains guidance but no fenced code blocks and no inline command backticks, so agents have no concrete commands to run.',
+    },
+    help: {
+      text: 'Add exact setup and validation commands such as `pnpm install` and `pnpm run ci`, ideally inside fenced code blocks, so agents know exactly what to run.',
+    },
+  },
 ];
 
 const METADATA_BY_ID: Map<string, RuleMetadata> = new Map(

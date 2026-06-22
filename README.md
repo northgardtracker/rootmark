@@ -170,6 +170,7 @@ Curated good and bad instruction file examples live in the [examples gallery](do
 | `dangerous-instruction.secret-exposure` | 🔴 error | Instruction to print secrets or env vars |
 | `context-bloat.too-long` | 🟡/🔴 | File exceeds 900 words (warning) or 1600 words (error) |
 | `stale-command.missing-package-script` | 🔴 error | Referenced npm script doesn't exist in package.json |
+| `vague-instructions.no-commands` | 🟡 warning | Instruction file has no concrete commands (no fenced code blocks, no inline command backticks) |
 
 > **Note on severity labels:** Internally the scanner uses `fail`, `warn`, and `info`. The CLI maps `error` → `fail` and `warning` → `warn`. Both forms are accepted by `--fail-on`.
 
