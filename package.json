@@ -2,6 +2,10 @@
   "name": "agents-md-xray",
   "version": "0.1.4",
   "description": "CLI and CI checker for AGENTS.md quality, drift, and agent instruction safety.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/northgardtracker/agents-md-xray"
+  },
   "type": "module",
   "packageManager": "pnpm@10.29.3",
   "bin": {
