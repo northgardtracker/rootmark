@@ -49,7 +49,7 @@ Roadmap items listed below are not yet implemented unless explicitly checked off
 - 📏 **Context bloat analysis** — Warns when instructions are too long for efficient agent use
 - 🔗 **Stale command detection** — Verifies `pnpm test`, `pnpm run lint`, etc. match `package.json`
 - 📋 **Required section checks** — Ensures setup, test, style, safety, and PR sections exist
-- 📊 **Output formats** — Pretty (human-readable) and JSON for automation
+- 📊 **Output formats** — Pretty, JSON, and SARIF for automation
 - 🎯 **Configurable fail threshold** — Fail CI on `error`, `warning`, or disable with `off`
 
 ## Installation
@@ -77,6 +77,9 @@ agents-md-xray scan .
 agents-md-xray scan . --format json
 agents-md-xray scan . --json          # shorthand
 
+# SARIF output for GitHub Code Scanning
+agents-md-xray scan . --format sarif > results.sarif
+
 # Fail CI on any warning or worse
 agents-md-xray scan . --fail-on warning
 
@@ -93,7 +96,7 @@ agents-md-xray scan ./packages/my-lib
 agents-md-xray scan [root] [options]
 
 Options:
-  --format <pretty|json>         Output format (default: pretty)
+  --format <pretty|json|sarif>   Output format (default: pretty)
   --json                         Alias for --format json
   --fail-on <warning|error|off>  Exit 1 when findings match this level (default: error)
   --help, -h                     Show help
@@ -201,7 +204,7 @@ jobs:
 - [x] Dangerous instruction detection
 - [x] Context bloat analysis
 - [x] Stale command detection (run + direct shorthand)
-- [ ] SARIF output for GitHub Code Scanning ([#1](https://github.com/northgardtracker/agents-md-xray/issues/1))
+- [x] SARIF output for GitHub Code Scanning ([#1](https://github.com/northgardtracker/agents-md-xray/issues/1))
 - [ ] GitHub Action with PR comments ([#2](https://github.com/northgardtracker/agents-md-xray/issues/2))
 - [ ] Nested AGENTS.md conflict detection ([#3](https://github.com/northgardtracker/agents-md-xray/issues/3))
 - [ ] MCP config inventory and risk preview ([#4](https://github.com/northgardtracker/agents-md-xray/issues/4))
