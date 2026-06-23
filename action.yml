@@ -1,0 +1,93 @@
+name: agents-md-xray
+description: >-
+  Scan AGENTS.md and coding-agent instruction files for drift and unsafe
+  guidance, with an optional sticky PR summary comment.
+author: agents-md-xray contributors
+
+# NOTE: This action metadata lets the repository be consumed as a GitHub Action
+# once it is released and tagged. Publishing to the GitHub Marketplace is a
+# separate, manual release step and is NOT performed by adding this file.
+
+branding:
+  icon: shield
+  color: blue
+
+inputs:
+  root:
+    description: Root path to scan for instruction files.
+    required: false
+    default: '.'
+  fail-on:
+    description: 'Severity threshold that fails the job: error, warning, or off.'
+    required: false
+    default: error
+  comment:
+    description: >-
+      Post or update a sticky, top-level PR summary comment with findings.
+      Only applies to pull_request events.
+    required: false
+    default: 'false'
+  github-token:
+    description: Token used to post the PR summary comment when comment is true.
+    required: false
+    default: ${{ github.token }}
+  node-version:
+    description: Node.js version used to run the CLI.
+    required: false
+    default: '22'
+
+outputs:
+  score:
+    description: Overall agents-md-xray score from 0 to 100.
+    value: ${{ steps.meta.outputs.score }}
+  findings-count:
+    description: Total number of findings reported by the scan.
+    value: ${{ steps.meta.outputs.findings-count }}
+  json-path:
+    description: Absolute path to the JSON results file written during the scan.
+    value: ${{ steps.scan.outputs.json-path }}
+
+runs:
+  using: composite
+  steps:
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.node-version }}
+
+    - name: Scan instruction files (collect JSON)
+      id: scan
+      shell: bash
+      env:
+        ROOT: ${{ inputs.root }}
+        RESULTS_JSON: ${{ runner.temp }}/agents-md-xray-results.json
+      run: |
+        set -euo pipefail
+        # Collect findings with --fail-on off so the job can summarize and
+        # comment before deciding whether to fail (see the enforce step below).
+        # @latest is convenient but mutable; pin a version (e.g.
+        # agents-md-xray@0.1.4) for fully reproducible runs.
+        npx --yes agents-md-xray scan "$ROOT" --format json --fail-on off > "$RESULTS_JSON"
+        echo "json-path=$RESULTS_JSON" >> "$GITHUB_OUTPUT"
+
+    - name: Compute outputs
+      id: meta
+      shell: bash
+      env:
+        RESULTS_JSON: ${{ steps.scan.outputs.json-path }}
+      run: node "${{ github.action_path }}/action/set-outputs.mjs"
+
+    - name: Post or update PR summary comment
+      if: ${{ inputs.comment == 'true' }}
+      shell: bash
+      env:
+        RESULTS_JSON: ${{ steps.scan.outputs.json-path }}
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+      run: node "${{ github.action_path }}/action/pr-comment.mjs"
+
+    - name: Enforce fail-on threshold
+      shell: bash
+      env:
+        RESULTS_JSON: ${{ steps.scan.outputs.json-path }}
+        FAIL_ON: ${{ inputs.fail-on }}
+      run: node "${{ github.action_path }}/action/enforce-threshold.mjs"
