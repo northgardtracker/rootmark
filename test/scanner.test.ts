@@ -28,6 +28,7 @@ describe("scanner", () => {
       root: "test/fixtures/bad",
       format: "json",
       failOn: "fail",
+      strict: true,
     });
     expect(result.findings.map((f) => f.id)).toContain(
       "dangerous-instruction.system-override",
@@ -56,6 +57,7 @@ describe("scanner", () => {
       root: "test/fixtures/bloated",
       format: "json",
       failOn: "fail",
+      strict: true,
     });
     expect(result.findings.map((f) => f.id)).toContain(
       "context-bloat.too-long",
@@ -70,6 +72,41 @@ describe("scanner", () => {
     });
     expect(result.files.length).toBeGreaterThan(0);
     expect(result.files[0]).toContain("AGENTS.md");
+  });
+
+  it("default scan over the bad fixture emits grounding findings only (PR3)", () => {
+    // PR3: default scans are grounding-only. The bad fixture has stale
+    // commands (grounding) plus required-section / dangerous-instruction
+    // issues (strict-only). Default should see the grounding findings and
+    // skip the prose / risky-instruction heuristics.
+    const result = scan({
+      root: "test/fixtures/bad",
+      format: "json",
+      failOn: "fail",
+    });
+    const ids = result.findings.map((f) => f.id);
+    // Grounding: present
+    expect(ids).toContain("stale-command.missing-package-script");
+    // Strict-only: absent
+    expect(ids).not.toContain("required-section.setup");
+    expect(ids).not.toContain("dangerous-instruction.system-override");
+    expect(ids).not.toContain("context-bloat.too-long");
+    expect(ids).not.toContain("vague-instructions.no-commands");
+  });
+
+  it("strict:true over the bad fixture additionally emits prose / risky-instruction findings (PR3)", () => {
+    const result = scan({
+      root: "test/fixtures/bad",
+      format: "json",
+      failOn: "fail",
+      strict: true,
+    });
+    const ids = result.findings.map((f) => f.id);
+    // Grounding: still present
+    expect(ids).toContain("stale-command.missing-package-script");
+    // Strict-only: now present
+    expect(ids).toContain("required-section.setup");
+    expect(ids).toContain("dangerous-instruction.system-override");
   });
 
 });
@@ -94,6 +131,7 @@ describe("required-sections rule", () => {
       root: "test/fixtures/minimal",
       format: "json",
       failOn: "fail",
+      strict: true,
     });
     const sectionFindings = result.findings.filter((f) =>
       f.id.startsWith("required-section"),
@@ -110,6 +148,7 @@ describe("dangerous-instructions rule", () => {
       root: "test/fixtures/bad",
       format: "json",
       failOn: "fail",
+      strict: true,
     });
     expect(result.findings.map((f) => f.id)).toContain(
       "dangerous-instruction.system-override",
@@ -121,6 +160,7 @@ describe("dangerous-instructions rule", () => {
       root: "test/fixtures/bad",
       format: "json",
       failOn: "fail",
+      strict: true,
     });
     expect(result.findings.map((f) => f.id)).toContain(
       "dangerous-instruction.skip-tests",
@@ -181,6 +221,7 @@ describe("vague-instructions rule", () => {
       root: "test/fixtures/vague-no-commands",
       format: "json",
       failOn: "fail",
+      strict: true,
     });
     const findings = result.findings.filter(
       (f) => f.id === "vague-instructions.no-commands",
@@ -220,6 +261,7 @@ describe("vague-instructions rule", () => {
       root: "test/fixtures/backtick-identifiers-only",
       format: "json",
       failOn: "fail",
+      strict: true,
     });
     const findings = result.findings.filter(
       (f) => f.id === "vague-instructions.no-commands",
@@ -769,10 +811,46 @@ describe("CLI integration", () => {
     const { exitCode } = runCli([
       "verify",
       "test/fixtures/minimal",
+      "--strict",
       "--fail-on",
       "warning",
     ]);
     expect(exitCode).toBe(1);
+  });
+
+  it("default verify of bad fixture shows grounding findings only (PR3)", () => {
+    const { stdout, exitCode } = runCli(["verify", "test/fixtures/bad"]);
+    // Grounding: present
+    expect(stdout).toContain("stale-command.missing-package-script");
+    // Strict-only: absent
+    expect(stdout).not.toContain("required-section.");
+    expect(stdout).not.toContain("dangerous-instruction.");
+    expect(stdout).not.toContain("context-bloat.");
+    expect(stdout).not.toContain("vague-instructions.");
+    // report-only default from PR1 — no findings gating.
+    expect(exitCode).toBe(0);
+  });
+
+  it("verify --strict on the same fixture adds prose / risky-instruction findings (PR3)", () => {
+    const withoutStrict = runCli(["verify", "test/fixtures/bad"]).stdout;
+    const withStrict = runCli(["verify", "test/fixtures/bad", "--strict"])
+      .stdout;
+    // Strict mode must produce strictly more findings than default.
+    const countStrictOnly = (s: string) =>
+      ["required-section.", "dangerous-instruction.", "context-bloat.", "vague-instructions."]
+        .reduce(
+          (sum, id) => sum + (s.includes(id) ? 1 : 0),
+          0,
+        );
+    expect(countStrictOnly(withStrict)).toBeGreaterThan(
+      countStrictOnly(withoutStrict),
+    );
+    // And specifically: required-section + dangerous-instruction show up
+    // only with --strict.
+    expect(withStrict).toContain("required-section.");
+    expect(withStrict).toContain("dangerous-instruction.");
+    expect(withoutStrict).not.toContain("required-section.");
+    expect(withoutStrict).not.toContain("dangerous-instruction.");
   });
 
   it("--help shows usage", () => {

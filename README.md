@@ -32,6 +32,12 @@ the v0.1.x line.
 
 - Reports findings through the CLI (pretty, JSON, SARIF) without ever executing
   the commands it inspects.
+- Runs **grounding rules by default**: stale-commands, contradictory-rules,
+  and nested-tool conflicts. These check whether what the instructions say
+  matches what the repository actually defines.
+- Opts into prose-style and risky-instruction heuristics only with
+  `--strict`: required-sections, context-bloat, vague-instructions,
+  and dangerous-instructions. Default scans never grade writing quality.
 
 ## What it does NOT do (v0.1)
 

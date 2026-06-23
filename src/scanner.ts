@@ -36,12 +36,18 @@ export function scan(options: ScanOptions): ScanResult {
     instructionFiles.push({ absolute, file, text });
   }
 
+  // Grounding rules run on every scan (instructions vs repository reality).
+  // Prose/style and risky-instruction heuristics are gated behind --strict
+  // because they grade writing quality, not whether commands actually work.
+  const strict = options.strict === true;
   for (const instr of instructionFiles) {
-    findings.push(...requiredSections(instr.file, instr.text));
-    findings.push(...dangerousInstructions(instr.file, instr.text));
-    findings.push(...contextBloat(instr.file, instr.text));
+    if (strict) {
+      findings.push(...requiredSections(instr.file, instr.text));
+      findings.push(...dangerousInstructions(instr.file, instr.text));
+      findings.push(...contextBloat(instr.file, instr.text));
+      findings.push(...vagueInstructions(instr.file, instr.text));
+    }
     findings.push(...staleCommands(instr.file, instr.text, packageScripts));
-    findings.push(...vagueInstructions(instr.file, instr.text));
     findings.push(...contradictoryRules(instr.file, instr.text));
   }
 

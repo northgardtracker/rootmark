@@ -179,3 +179,31 @@ template, the GitHub Action output, and the rule descriptor catalog.
   shipping it indefinitely.
 - **Pre-1.0, removing a documented output shape is acceptable.** The
   release notes call this out explicitly so consumers can adapt.
+
+
+## Default scan is grounding-only; prose-quality and risky-instruction heuristics are opt-in
+
+**Decision (PR3):** The default scan runs only the grounding rule set
+(`instruction-file.missing`, `staleCommands`, `contradictoryRules`,
+`nestedToolConflicts`, `nestedMissingOverride`). The prose-style and
+risky-instruction heuristics (`requiredSections`, `contextBloat`,
+`vagueInstructions`, `dangerousInstructions`) are gated behind a new
+`--strict` CLI flag (or `strict: true` on the programmatic API).
+
+**Reasoning:**
+
+- **Rootmark's core claim is grounded verification** (instructions vs
+  repository reality). Prose grading and risky-instruction heuristics
+  are useful but secondary; promoting them to the default path made the
+  tool noisier than its core contract.
+- **The opt-in is preserved, not removed.** All rule CODE is kept; the
+  PR only changed which rules run by default. Users who want the full
+  set pass `--strict` (CLI) or set `strict: true` in `ScanOptions`.
+- **Cleaner default CI behaviour.** Default scans now report only the
+  signal that the project actually stands behind (drift between docs
+  and the repo), and the prose-quality / risky-instruction surface is
+  explicitly opt-in so maintainers choose to enable it.
+- **Framing matters.** `dangerousInstructions` is documented as a
+  risky-instruction heuristic, never as security scanning. Rootmark
+  does not claim to detect vulnerabilities; the rule pattern-matches
+  on language that *reads* unsafe.

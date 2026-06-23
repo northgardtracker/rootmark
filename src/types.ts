@@ -17,6 +17,12 @@ export interface ScanOptions {
   root: string;
   format: 'pretty' | 'json' | 'sarif';
   failOn: Severity;
+  /**
+   * When true, also run the prose/style and risky-instruction heuristics
+   * (requiredSections, contextBloat, vagueInstructions, dangerousInstructions).
+   * Default scans are grounding-only: instructions vs repository reality.
+   */
+  strict?: boolean;
 }
 
 export interface ScanResult {
