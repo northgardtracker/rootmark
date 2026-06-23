@@ -86,7 +86,7 @@ rootmark verify [root] [options]
 Options:
   --format <pretty|json|sarif>   Output format (default: pretty)
   --json                         Alias for --format json
-  --fail-on <warning|error|off>  Exit 1 when findings match this level (default: error)
+  --fail-on <warning|error|off>  Exit 1 when findings match this level (default: off)
   --help, -h                     Show this help
   --version                      Show version
 ```

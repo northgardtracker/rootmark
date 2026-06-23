@@ -785,6 +785,23 @@ describe("CLI integration", () => {
     expect(exitCode).toBe(0);
   });
 
+  it("verify --help prints usage and exits 0", () => {
+    const { stdout, exitCode } = runCli(["verify", "--help"]);
+    expect(stdout).toContain("Usage:");
+    expect(stdout).toContain("rootmark verify");
+    expect(exitCode).toBe(0);
+  });
+
+  it("verify . --help prints usage and exits 0 without scanning", () => {
+    const { stdout, exitCode } = runCli(["verify", ".", "--help"]);
+    expect(stdout).toContain("Usage:");
+    expect(stdout).toContain("rootmark verify");
+    // Must not produce a scan report — the --help short-circuit must run
+    // before any scan, so no score line should appear.
+    expect(stdout).not.toContain("rootmark score:");
+    expect(exitCode).toBe(0);
+  });
+
   it("--version matches package.json version", () => {
     const pkg = JSON.parse(readFileSync(resolve("package.json"), "utf8"));
     const { stdout, exitCode } = runCli(["--version"]);
