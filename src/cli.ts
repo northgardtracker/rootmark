@@ -27,6 +27,11 @@ function main(argv: string[]): number {
     return 2;
   }
 
+  if (argv.includes("--help") || argv.includes("-h")) {
+    printHelp();
+    return 0;
+  }
+
   const rootArg = argv.find(
     (a) =>
       !a.startsWith("-") && a !== "verify" && a !== argv[0] && a !== argv[1],
@@ -62,7 +67,9 @@ function main(argv: string[]): number {
   }
 
   // --fail-on warning|error|off (legacy: fail|warn|info)
-  const failOnRaw = getFlagValue(argv, "--fail-on") ?? "error";
+  // Default is `off` (report-only) so a clean or finding-bearing scan never
+  // fails CI unless the user explicitly opts in via --fail-on warning|error.
+  const failOnRaw = getFlagValue(argv, "--fail-on") ?? "off";
   const failOn = resolveFailOn(failOnRaw);
 
   try {
@@ -132,7 +139,7 @@ Usage:
 Options:
   --format <pretty|json|sarif>   Output format (default: pretty)
   --json                         Alias for --format json
-  --fail-on <warning|error|off>  Exit 1 when findings match this level (default: error)
+  --fail-on <warning|error|off>  Exit 1 when findings match this level (default: off)
   --help, -h                     Show this help
   --version                      Show version
 

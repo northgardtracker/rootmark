@@ -88,10 +88,12 @@ all of which are well-understood rename operations.
 
 ## Known issue: `rootmark verify . --help` does not print help
 
-**Decision:** Document this as a known issue and defer the fix to PR1.
+**Decision (PR0):** Document this as a known issue and defer the fix to PR1.
 Do not patch it in PR0.
 
-**Symptom:**
+**Status:** **Resolved in PR1.**
+
+**Symptom (before PR1):**
 
 - `rootmark --help` and `rootmark verify --help` correctly print the CLI
   usage block and exit `0`.
@@ -100,33 +102,41 @@ Do not patch it in PR0.
   subcommand against `.`, returning whatever exit code the scan would
   normally produce (typically `0` on a clean repo, `1` on findings).
 
-**Root cause:**
+**Resolution (PR1):**
 
-The CLI's argument parser checks `argv[2]` for the subcommand and only
-inspects `argv[2]` for `--help` / `-h` / `--version` at the top level.
-Once `argv[2]` is a real subcommand (`verify`), the parser skips the
-top-level help short-circuit and falls through to the normal scan path,
-where `--help` is not a recognized flag and is therefore ignored.
+The CLI now recognizes `--help` / `-h` anywhere in `argv` after the
+`verify` subcommand is confirmed, before any root resolution or scan.
+Both `rootmark verify --help` and `rootmark verify . --help` print the
+usage block and exit `0` without running the scan. The existing
+top-level `rootmark --help` behaviour is preserved, and a new CLI
+integration test pins the post-subcommand behaviour.
 
-**Why we are not fixing it in PR0:**
+## Why `--fail-on` now defaults to `off` (report-only)
 
-PR0 is rename + reposition + governance only. Changing how flags are
-parsed after the subcommand is a CLI behaviour change, which the PR0
-scope explicitly excludes.
+**Decision (PR1):** The CLI default for `--fail-on` changes from
+`error` to `off`, so `rootmark verify .` never fails CI on findings
+unless the user explicitly opts in via `--fail-on warning|error`.
 
-**Planned fix (PR1):**
+**Reasoning:**
 
-Normalize the argument parser so `--help` (and `-h`) is recognized after
-any subcommand. The fix should:
+- **Report-only is the safe default for an additive tool.** Rootmark
+  is a static analyzer that produces findings; most users want to see
+  the report first, then decide whether to gate CI on it. A default
+  that fails builds on first install is hostile to adoption.
+- **Opt-in gating is still first-class.** Users who want strict CI
+  behaviour can pass `--fail-on warning` or `--fail-on error`
+  explicitly. The GitHub Action wrapper continues to expose
+  `fail-on` as an input so consumers can wire it into their workflows.
+- **Exit-code semantics stay stable.** `0` = clean or report-only,
+  `1` = gated failure, `2` = usage / path / format error. Only the
+  *default* gate moved; the gate itself is unchanged.
 
-1. Detect `--help` / `-h` anywhere in `argv` and print the usage block,
-   regardless of whether a subcommand is present.
-2. Keep the existing top-level `rootmark --help` behaviour identical so
-   no test churns.
-3. Add a CLI integration test that pins the new behaviour:
-   `rootmark verify . --help` must print the usage block and exit `0`,
-   without running the scan.
+**What we accepted:**
 
-Until PR1 lands, users who want help after the subcommand should run
-`rootmark --help` or `rootmark verify --help` instead of passing a root
-path before `--help`.
+- Users who relied on the previous default to gate CI on `error`
+  findings without passing `--fail-on error` will need to add the
+  flag explicitly. The CHANGELOG and CLI help text call this out.
+- The GitHub Action input `fail-on` still defaults to `error` because
+  the action is a CI wrapper, not an interactive CLI. Changing that
+  default would silently flip existing CI pipelines and is out of
+  scope for PR1.

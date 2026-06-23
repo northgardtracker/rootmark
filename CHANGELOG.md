@@ -7,6 +7,17 @@ All notable public releases of `rootmark`.
 Rename project to Rootmark; reposition to grounded verification; begin
 deprecating prose-quality/score and security-style framing.
 
+### Changed
+
+- Default `--fail-on` is now `off` (report-only). `rootmark verify .`
+  no longer fails CI on findings unless `--fail-on warning` or
+  `--fail-on error` is passed explicitly.
+
+### Fixed
+
+- `rootmark verify --help` and `rootmark verify . --help` now print
+  the usage block and exit `0` instead of running the scan.
+
 ## v0.1.4
 
 ### Added
