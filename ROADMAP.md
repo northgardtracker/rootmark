@@ -53,10 +53,6 @@ one place:
   discovered instruction files uniformly. Tool-specific grounding rules
   (for example, Claude-specific or Gemini-specific conventions) are
   deferred.
-- **0–100 score** — the legacy aggregated score is being deprecated in
-  favour of the three-state grounding report. It is still emitted by
-  the current CLI for backward compatibility but will be removed in a
-  later v0.1.x release.
 - **Auto-fix / auto-write** — Rootmark never modifies instruction files.
   It reports findings; the maintainer decides what to change.
 - **Configuration file** — v0.1 uses hardcoded defaults. A future

@@ -39,9 +39,9 @@ not position itself as a security scanner.
 - The tool is narrower than some users want. People will ask for "real"
   command execution, MCP scanning, CVE checks, etc. Those are real
   problems; they are also out of scope for v0.1 by design.
-- The legacy "0–100 score" is still emitted during the v0.1.x
-  refactor and is being deprecated. Removing it now would be a behaviour
-  change on top of a rename.
+- The legacy "0–100 score" was retained during the v0.1.x refactor for
+  backward compatibility and was retired in PR2. Removing it as part of
+  the rename would have stacked two behaviour changes on one release.
 
 ## Why Rootmark, and why we accepted practical namespace cleanliness over perfect .com ownership
 
@@ -140,3 +140,42 @@ unless the user explicitly opts in via `--fail-on warning|error`.
   the action is a CI wrapper, not an interactive CLI. Changing that
   default would silently flip existing CI pipelines and is out of
   scope for PR1.
+
+
+## Why `--fail-on` for the GitHub Action now defaults to `off`
+
+**Decision (PR2):** The composite Action's `fail-on` input default
+changes from `error` to `off`, matching the CLI default established
+in PR1. An unset `FAIL_ON` environment variable is also treated as
+`off` in `action/enforce-threshold.mjs`.
+
+**Reasoning:**
+
+- **Report-only by default is now the project-wide contract.** The CLI
+  default landed in PR1; the Action was deliberately left with
+  `error` as a temporary inconsistency to avoid flipping existing CI
+  pipelines silently. PR2 finishes that alignment.
+- **CI consumers who want gating still opt in explicitly.** Workflows
+  that previously worked with the implicit `error` default must now
+  set `fail-on: error` (or `fail-on: warning`) themselves. This is
+  documented in `docs/github-actions.md` and called out in the
+  CHANGELOG.
+
+## Retired the 0–100 score
+
+**Decision (PR2):** The legacy 0–100 aggregate score is removed from
+`ScanResult`, the JSON output, the pretty CLI output, the PR comment
+template, the GitHub Action output, and the rule descriptor catalog.
+
+**Reasoning:**
+
+- **A single aggregate score implies a quality grade Rootmark does not
+  claim.** Grounded verification reports discrete findings; collapsing
+  them into one number both hides information and invites the wrong
+  mental model (Rootmark as a quality gate rather than a drift
+  detector).
+- **The score was already being deprecated.** The v0.1.x roadmap
+  listed it as deferred; PR2 finishes the deprecation rather than
+  shipping it indefinitely.
+- **Pre-1.0, removing a documented output shape is acceptable.** The
+  release notes call this out explicitly so consumers can adapt.

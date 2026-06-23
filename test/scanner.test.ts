@@ -19,8 +19,8 @@ describe("scanner", () => {
       format: "pretty",
       failOn: "fail",
     });
-    expect(result.score).toBe(100);
     expect(result.findings).toHaveLength(0);
+    expect(result.files.length).toBeGreaterThan(0);
   });
 
   it("finds dangerous and stale instructions", () => {
@@ -49,7 +49,6 @@ describe("scanner", () => {
     expect(result.findings.map((f) => f.id)).toContain(
       "instruction-file.missing",
     );
-    expect(result.score).toBeLessThan(100);
   });
 
   it("detects context bloat in large files", () => {
@@ -73,19 +72,6 @@ describe("scanner", () => {
     expect(result.files[0]).toContain("AGENTS.md");
   });
 
-  it("calculates score correctly — more severe findings reduce more", () => {
-    const badResult = scan({
-      root: "test/fixtures/bad",
-      format: "json",
-      failOn: "fail",
-    });
-    const goodResult = scan({
-      root: "test/fixtures/good",
-      format: "json",
-      failOn: "fail",
-    });
-    expect(goodResult.score).toBeGreaterThan(badResult.score);
-  });
 });
 
 // ── Required sections rule ──────────────────────────────────────────────────
@@ -473,15 +459,18 @@ describe("nested-conflicts rule", () => {
 // ── Reporters ───────────────────────────────────────────────────────────────
 
 describe("reporters", () => {
-  it("renderText includes score and findings", () => {
+  it("renderText includes the findings header and per-finding output", () => {
     const result = scan({
       root: "test/fixtures/bad",
       format: "pretty",
       failOn: "fail",
     });
     const text = renderText(result);
-    expect(text).toContain("rootmark score:");
+    expect(text).toContain("Rootmark ");
+    expect(text).toContain("finding(s)");
     expect(text).toContain("[FAIL]");
+    // PR1 anti-regression: score line must never come back.
+    expect(text).not.toContain("rootmark score:");
   });
 
   it("renderJson returns valid JSON with expected fields", () => {
@@ -491,10 +480,11 @@ describe("reporters", () => {
       failOn: "fail",
     });
     const parsed = JSON.parse(renderJson(result));
-    expect(parsed.score).toBe(100);
     expect(parsed.findings).toHaveLength(0);
     expect(parsed.root).toBeDefined();
     expect(parsed.files).toBeDefined();
+    // PR2: score is gone from ScanResult and from the JSON output.
+    expect(parsed.score).toBeUndefined();
   });
 
   it("shouldFail returns true when findings match fail level", () => {
@@ -727,24 +717,32 @@ describe("CLI integration", () => {
 
   it("verify . exits 0 for clean repo (self-scan)", () => {
     const { stdout, exitCode } = runCli(["verify", "."]);
-    expect(stdout).toContain("rootmark score:");
+    expect(stdout).toContain("Rootmark ");
+    expect(stdout).toContain("finding(s)");
+    expect(stdout).toContain("No findings.");
+    // PR2: score line is gone for good.
+    expect(stdout).not.toContain("rootmark score:");
     expect(exitCode).toBe(0);
   });
 
   it("--format json outputs valid JSON", () => {
     const { stdout, exitCode } = runCli(["verify", ".", "--format", "json"]);
     const parsed = JSON.parse(stdout);
-    expect(parsed.score).toBeTypeOf("number");
     expect(parsed.findings).toBeInstanceOf(Array);
+    expect(parsed.root).toBeDefined();
+    expect(parsed.files).toBeDefined();
+    // PR2: score is gone from the JSON shape.
+    expect(parsed.score).toBeUndefined();
     expect(exitCode).toBe(0);
   });
 
   it("--json is an alias for --format json", () => {
     const { stdout, exitCode } = runCli(["verify", ".", "--json"]);
     const parsed = JSON.parse(stdout);
-    expect(parsed.score).toBeTypeOf("number");
     expect(parsed.findings).toBeInstanceOf(Array);
     expect(exitCode).toBe(0);
+    // PR2: score is gone from the JSON shape.
+    expect(parsed.score).toBeUndefined();
   });
 
   it("--fail-on off never exits 1", () => {

@@ -19,9 +19,9 @@ inputs:
     required: false
     default: "."
   fail-on:
-    description: "Severity threshold that fails the job: error, warning, or off."
+    description: "Severity threshold that fails the job: error, warning, or off. Defaults to off (report-only) so the Action never fails a job unless the user explicitly opts in."
     required: false
-    default: error
+    default: off
   comment:
     description: >-
       Post or update a sticky, top-level PR summary comment with findings.
@@ -38,9 +38,6 @@ inputs:
     default: "22"
 
 outputs:
-  score:
-    description: Overall rootmark score from 0 to 100.
-    value: ${{ steps.meta.outputs.score }}
   findings-count:
     description: Total number of findings reported by the scan.
     value: ${{ steps.meta.outputs.findings-count }}

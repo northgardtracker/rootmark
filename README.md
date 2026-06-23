@@ -110,7 +110,7 @@ rootmark verify ./packages/my-lib
 ### Current v0.1 output (pretty)
 
 ```
-rootmark score: 64/100
+Rootmark — 1 finding(s) (1 error, 0 warning, 0 info)
 instruction files: AGENTS.md
 
 [FAIL] stale-command.missing-package-script (AGENTS.md)

@@ -1,13 +1,27 @@
-import type { ScanResult, Severity } from "./types.js";
+import type { Finding, ScanResult, Severity } from "./types.js";
 import {
   getRuleMetadata,
   RULE_METADATA,
   type RuleMetadata,
 } from "./rule-metadata.js";
 
+function countBySeverity(findings: Finding[]): { fail: number; warn: number; info: number } {
+  const counts = { fail: 0, warn: 0, info: 0 };
+  for (const f of findings) {
+    if (f.severity === "fail") counts.fail++;
+    else if (f.severity === "warn") counts.warn++;
+    else if (f.severity === "info") counts.info++;
+  }
+  return counts;
+}
+
 export function renderText(result: ScanResult): string {
   const lines: string[] = [];
-  lines.push(`rootmark score: ${result.score}/100`);
+  const counts = countBySeverity(result.findings);
+  const n = result.findings.length;
+  lines.push(
+    `Rootmark — ${n} finding(s) (${counts.fail} error, ${counts.warn} warning, ${counts.info} info)`,
+  );
   lines.push(
     `instruction files: ${result.files.length ? result.files.join(", ") : "none"}`,
   );

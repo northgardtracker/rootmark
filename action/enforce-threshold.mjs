@@ -10,7 +10,7 @@ function fail(message) {
 }
 
 const resultsPath = process.env.RESULTS_JSON;
-const failOn = process.env.FAIL_ON ?? "error";
+const failOn = process.env.FAIL_ON ?? "off";
 if (!resultsPath) fail("RESULTS_JSON is not set.");
 
 let result;

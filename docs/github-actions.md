@@ -124,7 +124,7 @@ contaminate the JSON results.
 | Input | Default | Description |
 |:------|:--------|:------------|
 | `root` | `.` | Root path to scan for instruction files. |
-| `fail-on` | `error` | Severity threshold that fails the job: `error`, `warning`, or `off`. |
+| `fail-on` | `off` | Severity threshold that fails the job: `error`, `warning`, or `off`. Defaults to `off` so the Action never fails a job unless explicitly opted in. |
 | `comment` | `false` | Post or update a sticky top-level PR summary comment (pull_request events only). |
 | `github-token` | `${{ github.token }}` | Token used to post the PR comment. |
 | `node-version` | `22` | Node.js version used to run the CLI. |
@@ -133,7 +133,6 @@ contaminate the JSON results.
 
 | Output | Description |
 |:-------|:------------|
-| `score` | Overall score from 0 to 100. (Being deprecated; see [ROADMAP.md](../ROADMAP.md).) |
 | `findings-count` | Total number of findings. |
 | `json-path` | Absolute path to the JSON results file written during the scan. |
 
@@ -232,8 +231,8 @@ step is skipped with a notice; the scan and threshold steps still run.
 
 ### Example: report-only mode
 
-Never fail the job — just surface the score, outputs, and (optionally) a
-comment:
+Never fail the job — just surface the findings count, the JSON results
+file, and (optionally) a comment:
 
 ```yaml
       - uses: northgardtracker/rootmark@v0.1.4

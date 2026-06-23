@@ -7,11 +7,21 @@ All notable public releases of `rootmark`.
 Rename project to Rootmark; reposition to grounded verification; begin
 deprecating prose-quality/score and security-style framing.
 
+### Removed
+
+- 0–100 score retired; Rootmark reports findings, not a score. The `score`
+  field is gone from `ScanResult`, the JSON output, the pretty CLI output,
+  the GitHub Action PR comment, the action output, and the rule descriptor
+  catalog.
+
 ### Changed
 
 - Default `--fail-on` is now `off` (report-only). `rootmark verify .`
   no longer fails CI on findings unless `--fail-on warning` or
   `--fail-on error` is passed explicitly.
+- GitHub Action `fail-on` input now defaults to `off` (report-only),
+  matching the CLI default. The action no longer hardcodes `error`
+  anywhere; an unset `FAIL_ON` environment variable is treated as `off`.
 
 ### Fixed
 

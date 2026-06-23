@@ -30,7 +30,6 @@ Current behavior:
 
 - scans instruction files found by exact name (`AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `.github/copilot-instructions.md`)
 - runs every rule on every matching file
-- computes a score from hardcoded severity penalties
 - never executes commands found in scanned files
 - does not collect telemetry
 
@@ -167,7 +166,6 @@ When no config file exists, behavior must remain exactly as it is today:
 - `--format pretty|json` remains unchanged
 - `--json` alias remains unchanged
 - `--fail-on warning|error|off` remains unchanged
-- score calculation remains unchanged
 - exit behavior remains unchanged
 
 ## Testing strategy for future implementation

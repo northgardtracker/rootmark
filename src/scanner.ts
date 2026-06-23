@@ -50,15 +50,5 @@ export function scan(options: ScanOptions): ScanResult {
   findings.push(...nestedToolConflicts(instructionFiles));
   findings.push(...nestedMissingOverride(instructionFiles, options.root));
 
-  const score = scoreFindings(findings);
-  return { root: options.root, score, files: files.map((f) => rel(options.root, f)), findings };
-}
-
-function scoreFindings(findings: Finding[]): number {
-  const penalty = findings.reduce((sum, finding) => {
-    if (finding.severity === 'fail') return sum + 18;
-    if (finding.severity === 'warn') return sum + 7;
-    return sum + 2;
-  }, 0);
-  return Math.max(0, 100 - penalty);
+  return { root: options.root, files: files.map((f) => rel(options.root, f)), findings };
 }

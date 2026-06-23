@@ -124,6 +124,6 @@ If you are a new contributor, follow this walkthrough in order. First, read the 
 
 - *Where do new rules live?* Under `src/rules/`, one file per rule, with a default export that takes the file path, file text, and (optionally) package scripts.
 - *Where does the rule metadata catalog live?* In `src/rule-metadata.ts`. Update it whenever you add a new rule ID.
-- *How are findings scored?* Failures reduce the score by 18 points, warnings by 7 points, and info-level notes by 2 points each, down to a minimum of 0.
+- *How does the scanner decide severity?* Findings are tagged `fail`, `warn`, or `info` per rule; the user picks the `--fail-on` threshold for their CI.
 - *Why does the scanner ignore the `test/` directory?* To avoid picking up fixture files as real instruction files during self-scan.
 - *Can I add a new instruction-file name?* Only by editing `src/utils.ts`. Make sure tests and docs stay in sync.

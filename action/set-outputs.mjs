@@ -1,5 +1,5 @@
-// Composite-action step: read the scan JSON and publish the action outputs
-// `score` and `findings-count`. The `json-path` output is set directly by the
+// Composite-action step: read the scan JSON and publish the action output
+// `findings-count`. The `json-path` output is set directly by the
 // scan shell step. Built-in modules only.
 import { appendFileSync, readFileSync } from "node:fs";
 import { summarize } from "./lib.mjs";
@@ -21,14 +21,14 @@ try {
   );
 }
 
-const { score, findingsCount } = summarize(result);
+const { findingsCount } = summarize(result);
 
 const outputPath = process.env.GITHUB_OUTPUT;
 if (outputPath) {
   appendFileSync(
     outputPath,
-    `score=${score}\nfindings-count=${findingsCount}\n`,
+    `findings-count=${findingsCount}\n`,
   );
 }
 
-console.log(`rootmark: score=${score}/100, findings=${findingsCount}`);
+console.log(`rootmark: findings=${findingsCount}`);

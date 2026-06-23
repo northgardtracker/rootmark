@@ -18,13 +18,12 @@ function ids(result: ReturnType<typeof scan>): string[] {
 // ── Good fixtures: each supported instruction-file name ────────────────────
 
 describe('realistic good AGENTS.md fixture', () => {
-  it('scores 100/100 with no findings and discovers the file by exact name', () => {
+  it('has no findings and discovers the file by exact name', () => {
     const result = scan({
       root: 'test/fixtures/realistic-good-agents',
       format: 'json',
       failOn: 'fail'
     });
-    expect(result.score).toBe(100);
     expect(result.findings).toHaveLength(0);
     expect(result.files).toContain('AGENTS.md');
   });
@@ -41,39 +40,36 @@ describe('realistic good AGENTS.md fixture', () => {
 });
 
 describe('realistic good CLAUDE.md fixture', () => {
-  it('scores 100/100 with no findings and discovers CLAUDE.md', () => {
+  it('has no findings and discovers CLAUDE.md', () => {
     const result = scan({
       root: 'test/fixtures/realistic-good-claude',
       format: 'json',
       failOn: 'fail'
     });
-    expect(result.score).toBe(100);
     expect(result.findings).toHaveLength(0);
     expect(result.files).toContain('CLAUDE.md');
   });
 });
 
 describe('realistic good GEMINI.md fixture', () => {
-  it('scores 100/100 with no findings and discovers GEMINI.md', () => {
+  it('has no findings and discovers GEMINI.md', () => {
     const result = scan({
       root: 'test/fixtures/realistic-good-gemini',
       format: 'json',
       failOn: 'fail'
     });
-    expect(result.score).toBe(100);
     expect(result.findings).toHaveLength(0);
     expect(result.files).toContain('GEMINI.md');
   });
 });
 
 describe('realistic good .github/copilot-instructions.md fixture', () => {
-  it('scores 100/100 with no findings and discovers the nested copilot instructions', () => {
+  it('has no findings and discovers the nested copilot instructions', () => {
     const result = scan({
       root: 'test/fixtures/realistic-good-copilot',
       format: 'json',
       failOn: 'fail'
     });
-    expect(result.score).toBe(100);
     expect(result.findings).toHaveLength(0);
     expect(result.files).toContain('.github/copilot-instructions.md');
   });

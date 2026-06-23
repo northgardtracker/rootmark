@@ -19,7 +19,6 @@ function makeResult(
 ): ScanResult {
   return {
     root: "/repo",
-    score: 100,
     files: ["AGENTS.md"],
     findings,
     ...over,
@@ -90,10 +89,11 @@ describe("renderComment", () => {
     const body = renderComment(makeResult([]));
     expect(body.startsWith(PR_COMMENT_MARKER)).toBe(true);
     expect(body).toContain("## Rootmark report");
-    expect(body).toContain("- **Score:** 100/100");
     expect(body).toContain("- **Instruction files scanned:** 1");
     expect(body).toContain("- **Findings:** 0");
     expect(body).toContain("No findings.");
+    // PR2 anti-regression: the Score line must never come back.
+    expect(body).not.toContain("- **Score:**");
     expect(body).not.toContain(
       "| Severity | Rule | File | Evidence | Remediation |",
     );
@@ -101,9 +101,8 @@ describe("renderComment", () => {
 
   it("renders a findings table with mapped severities and the rule id", () => {
     const body = renderComment(
-      makeResult([FAIL_FINDING, WARN_FINDING], { score: 75 }),
+      makeResult([FAIL_FINDING, WARN_FINDING]),
     );
-    expect(body).toContain("- **Score:** 75/100");
     expect(body).toContain("- **Findings:** 2");
     expect(body).toContain(
       "| Severity | Rule | File | Evidence | Remediation |",
@@ -144,7 +143,7 @@ describe("renderComment", () => {
       message: `m${i}`,
       file: "AGENTS.md",
     }));
-    const body = renderComment(makeResult(many, { score: 0 }));
+    const body = renderComment(makeResult(many));
     const rows = body
       .split("\n")
       .filter((line) => line.startsWith("| warning |"));
@@ -236,17 +235,16 @@ describe("evaluateThreshold", () => {
 // ── summarize ─────────────────────────────────────────────────────────────────
 
 describe("summarize", () => {
-  it("extracts score and findings count", () => {
+  it("extracts the findings count", () => {
     expect(
-      summarize(makeResult([FAIL_FINDING, WARN_FINDING], { score: 64 })),
+      summarize(makeResult([FAIL_FINDING, WARN_FINDING])),
     ).toEqual({
-      score: 64,
       findingsCount: 2,
     });
   });
 
   it("is defensive against malformed results", () => {
-    expect(summarize({} as ScanResult)).toEqual({ score: 0, findingsCount: 0 });
+    expect(summarize({} as ScanResult)).toEqual({ findingsCount: 0 });
   });
 });
 
@@ -261,7 +259,6 @@ describe("runtime mirror parity (action/lib.mjs)", () => {
   const cases: ScanResult[] = [
     makeResult([]),
     makeResult([FAIL_FINDING, WARN_FINDING], {
-      score: 75,
       files: ["AGENTS.md", "docs/CLAUDE.md"],
     }),
     makeResult(
@@ -276,7 +273,6 @@ describe("runtime mirror parity (action/lib.mjs)", () => {
           remediation: "do | this",
         },
       ],
-      { score: 10 },
     ),
     makeResult(
       Array.from({ length: 40 }, (_, i) => ({
@@ -286,7 +282,6 @@ describe("runtime mirror parity (action/lib.mjs)", () => {
         message: `m${i}`,
         file: "AGENTS.md",
       })),
-      { score: 0 },
     ),
     {} as ScanResult,
   ];

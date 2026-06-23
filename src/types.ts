@@ -21,7 +21,6 @@ export interface ScanOptions {
 
 export interface ScanResult {
   root: string;
-  score: number;
   files: string[];
   findings: Finding[];
 }

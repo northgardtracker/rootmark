@@ -45,13 +45,10 @@ export function renderComment(result, options = {}) {
   const max = options.maxFindings ?? MAX_FINDINGS_IN_COMMENT;
   const findings = Array.isArray(result.findings) ? result.findings : [];
   const files = Array.isArray(result.files) ? result.files : [];
-  const score = typeof result.score === "number" ? result.score : 0;
-
   const lines = [];
   lines.push(PR_COMMENT_MARKER);
   lines.push("## Rootmark report");
   lines.push("");
-  lines.push(`- **Score:** ${score}/100`);
   lines.push(`- **Instruction files scanned:** ${files.length}`);
   lines.push(`- **Findings:** ${findings.length}`);
   lines.push("");
@@ -115,11 +112,10 @@ export function evaluateThreshold(findings, failOnRaw) {
   return { shouldFail, failOn: value };
 }
 
-/** Extract the action outputs (`score`, `findings-count`) from a scan result. */
+/** Extract the action output (`findings-count`) from a scan result. */
 export function summarize(result) {
-  const score = typeof result.score === "number" ? result.score : 0;
   const findingsCount = Array.isArray(result.findings)
     ? result.findings.length
     : 0;
-  return { score, findingsCount };
+  return { findingsCount };
 }
