@@ -22,6 +22,13 @@ deprecating prose-quality/score and security-style framing.
 - GitHub Action `fail-on` input now defaults to `off` (report-only),
   matching the CLI default. The action no longer hardcodes `error`
   anywhere; an unset `FAIL_ON` environment variable is treated as `off`.
+- Default scan now runs **grounding rules only** (stale-commands,
+  contradictory-rules, nested-tool-conflicts, nested-missing-override,
+  plus the always-on `instruction-file.missing` check). Prose-style and
+  risky-instruction heuristics (required-sections, context-bloat,
+  vague-instructions, dangerous-instructions) are opt-in via
+  `--strict`. The CLI parses `--strict` and passes it to `scan()`;
+  all rule code is preserved, only the gating changed.
 
 ### Fixed
 

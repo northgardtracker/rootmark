@@ -72,11 +72,16 @@ function main(argv: string[]): number {
   const failOnRaw = getFlagValue(argv, "--fail-on") ?? "off";
   const failOn = resolveFailOn(failOnRaw);
 
+  // --strict opts into prose/style and risky-instruction heuristics. Default
+  // is grounding-only: instructions vs repository reality.
+  const strict = argv.includes("--strict");
+
   try {
     const result = scan({
       root,
       format,
       failOn: failOn === "off" ? "fail" : failOn,
+      strict,
     });
     console.log(
       format === "json"
@@ -140,6 +145,7 @@ Options:
   --format <pretty|json|sarif>   Output format (default: pretty)
   --json                         Alias for --format json
   --fail-on <warning|error|off>  Exit 1 when findings match this level (default: off)
+  --strict                       Also run style/prose and risky-instruction heuristics (off by default)
   --help, -h                     Show this help
   --version                      Show version
 
@@ -150,6 +156,7 @@ Examples:
   rootmark verify . --format sarif
   rootmark verify . --fail-on warning
   rootmark verify . --fail-on off
+  rootmark verify . --strict
 `);
 }
 

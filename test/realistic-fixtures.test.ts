@@ -82,7 +82,8 @@ describe('realistic bad dangerous fixture', () => {
     const result = scan({
       root: 'test/fixtures/realistic-bad-dangerous',
       format: 'json',
-      failOn: 'fail'
+      failOn: 'fail',
+      strict: true,
     });
     const found = ids(result);
     expect(found).toContain('dangerous-instruction.system-override');
@@ -95,7 +96,8 @@ describe('realistic bad dangerous fixture', () => {
     const result = scan({
       root: 'test/fixtures/realistic-bad-dangerous',
       format: 'json',
-      failOn: 'fail'
+      failOn: 'fail',
+      strict: true,
     });
     const dangerous = result.findings.filter((f) => f.id.startsWith('dangerous-instruction.'));
     for (const finding of dangerous) {
@@ -138,7 +140,8 @@ describe('realistic bad missing-sections fixture', () => {
     const result = scan({
       root: 'test/fixtures/realistic-bad-missing-sections',
       format: 'json',
-      failOn: 'fail'
+      failOn: 'fail',
+      strict: true,
     });
     const sectionFindings = ids(result).filter((id) => id.startsWith('required-section.'));
     expect(sectionFindings).toContain('required-section.style');
@@ -152,7 +155,8 @@ describe('realistic bad bloated fixture', () => {
     const result = scan({
       root: 'test/fixtures/realistic-bad-bloated',
       format: 'json',
-      failOn: 'fail'
+      failOn: 'fail',
+      strict: true,
     });
     expect(ids(result)).toContain('context-bloat.too-long');
   });
